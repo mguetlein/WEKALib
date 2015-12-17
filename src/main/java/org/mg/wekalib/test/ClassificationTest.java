@@ -2,50 +2,51 @@ package org.mg.wekalib.test;
 
 import java.awt.Dimension;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetBoxPlot;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
-import org.mg.wekalib.classifier.RegressionByDiscretizationW;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
-import weka.classifiers.lazy.LWL;
-import weka.classifiers.meta.Bagging;
-import weka.classifiers.trees.RandomForest;
+import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.supportVector.PolyKernel;
+import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.Instances;
-import weka.estimators.UnivariateNormalEstimator;
 
-public class RegressionTest
+public class ClassificationTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		String datasets[] = new String[] { "anneal","anneal.ORIG","audiology","autos","balance-scale","breast-cancer","breast-w","colic","colic.ORIG","credit-a","credit-g","diabetes","glass","heart-c","heart-h","heart-statlog","hepatitis","hypothyroid.arff","ionosphere","iris","kr-vs-kp","labor","letter","lymph","mushroom","primary-tumor","segment","sick","sonar","soybean","splice","vehicle","vote","vowel","waveform-5000","zoo" };
-		//too-big: "quake"
-		//unstable/not-modable: "fruitfly","breastTumor", "bolts"
+		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos", "breast-cancer", "breast-w",
+				"colic", "colic.ORIG", "credit-a", "credit-g", "diabetes", "glass", "heart-c", "heart-h",
+				"heart-statlog", "hypothyroid", "ionosphere", "labor", "lymph", "primary-tumor", "segment", "sonar",
+				"soybean", "vehicle", "vote", "vowel", "zoo" };
+		//too-big: "letter", "kr-vs-kp", "splice", waveform-5000, "sick"
+		//too-easy: "mushroom"
+		//too-unstable: "hepatitis"
+		//not-working: "iris" "balance-scale
 		ArrayUtil.scramble(datasets);
 
 		Thread th = new Thread(new Runnable()
 		{
-
 			@Override
 			public void run()
 			{
 				while (true)
 				{
-					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset",
-							"Pearson");
+					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset", "AUC");
 					bp.setHideMean(true);
-
-					SwingUtil.showInFrame(bp.getChart(), "Pearson", false, new Dimension(1200, 800));
+					SwingUtil.showInFrame(bp.getChart(), "AUC", false, new Dimension(1200, 800));
 					SwingUtil.waitWhileWindowsVisible();
 				}
-
 				//				for (Window w : Window.getWindows())
 				//					w.dispose();
 				//				SwingUtil.waitForAWTEventThread();
@@ -65,7 +66,7 @@ public class RegressionTest
 
 		for (int seed = 0; seed < 10; seed++)
 		{
-			for (int i = 0; i < 15; i++) //datasets.length
+			for (int i = 0; i < 25; i++) //datasets.length
 			{
 				run(datasets[i], seed);
 			}
@@ -88,7 +89,7 @@ public class RegressionTest
 
 	public static boolean run(String data, int seed) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/numeric/" + data
+		Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/nominal/" + data
 				+ ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
@@ -100,36 +101,71 @@ public class RegressionTest
 			System.out.println("too small");
 			return false;
 		}
+		else if (inst.classAttribute().numValues() > 3)
+		{
+			System.out.println("not binary");
+			return false;
+		}
 		else
 		{
-			//			Classifier class1 = new M5Rules();
 
-			RegressionByDiscretizationW class1 = new RegressionByDiscretizationW();
-			class1.setClassifier(new RandomForest());
-			class1.setNumBins(15);
-			class1.setEstimator(new UnivariateNormalEstimator());
-
-			Bagging bag1 = new Bagging();
-			bag1.setClassifier(class1);
-
-			LWL lwl1 = new LWL();
-			lwl1.setClassifier(bag1);
-			lwl1.setKNN(-1);//(int) (inst.numInstances() * 0.5));
-
-			//			RegressionByDiscretization regr = new RegressionByDiscretization();
-			//			regr.setClassifier(new RandomForest());
-			//			regr.setNumBins(15);
-			//			regr.setEstimator(new UnivariateNormalEstimator());
-			//
-			//			Bagging bag2 = new Bagging();
-			//			bag2.setClassifier(regr);
-			//
-			//			LWL lwl2 = new LWL();
-			//			lwl2.setClassifier(bag2);
-
-			for (Classifier classifier : new Classifier[] { class1, lwl1 })//, class2, bag2, lwl2 })
+			List<Classifier> classifiers = new ArrayList<>();
+			List<String> names = new ArrayList<>();
+			for (boolean rbf : new boolean[] { true, false })
 			{
-				String name = getName(classifier);
+				for (Double c : new Double[] { 1.0, 10.0, 100.0 })
+				{
+					for (Double g : new Double[] { 0.001, 0.01, 0.1 })
+					{
+						for (Double e : new Double[] { 1.0, 2.0, 3.0 })
+						{
+							SMO smo = new SMO();
+							smo.setC(c);
+							String name = "SMO ";
+							name += rbf ? " rbf" : " poly";
+							name += " c" + c;
+							if (rbf && c == 0.01)
+								continue;
+							//							if (rbf && c == 0.1 && g == 0.01)
+							//								continue;
+							if (!rbf && g != 0.01)
+								continue;
+							if (rbf && e != 1.0)
+								continue;
+							smo.setKernel(rbf ? new RBFKernel() : new PolyKernel());
+							if (rbf)
+							{
+								((RBFKernel) smo.getKernel()).setGamma(g);
+								name += " g" + g;
+							}
+							else
+							{
+								((PolyKernel) smo.getKernel()).setExponent(e);
+								name += " e" + e;
+							}
+							classifiers.add(smo);
+							names.add(name);
+						}
+					}
+				}
+			}
+			//			classifiers.add(new RandomForest());
+			//			names.add("Random Forest 100");
+			//
+			//			RandomForest rf = new RandomForest();
+			//			rf.setNumTrees(1000);
+			//			classifiers.add(rf);
+			//			names.add("Random Forest 1000");
+			//
+			//			classifiers.add(new NaiveBayes());
+			//			names.add("Naive Bayes");
+
+			for (int i = 0; i < classifiers.size(); i++)
+			{
+				Classifier classifier = classifiers.get(i);
+				String name = names.get(i);
+
+				//				String name = getName(classifier);
 				System.out.println(name + " " + seed);
 
 				//				for (int i = 0; i < 3; i++)
@@ -155,12 +191,16 @@ public class RegressionTest
 
 				for (Predictions pf : PredictionUtil.perFold(p))
 				{
+					//					System.out.println(PredictionUtil.summaryClassification(pf));
+					//					System.out.println(PredictionUtil.AUC(pf));
+					//					System.exit(1);
+
 					int idx = res.addResult();
 					res.setResultValue(idx, "Algorithm", name);
 					res.setResultValue(idx, "Dataset", data);
 					res.setResultValue(idx, "Fold", pf.fold[0]);
-					res.setResultValue(idx, "RMSE", PredictionUtil.rmse(pf));
-					res.setResultValue(idx, "Pearson", PredictionUtil.pearson(pf));
+					res.setResultValue(idx, "AUC", PredictionUtil.AUC(pf));
+
 				}
 				//				}
 			}

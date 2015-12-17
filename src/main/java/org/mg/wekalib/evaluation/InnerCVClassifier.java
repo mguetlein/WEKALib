@@ -11,10 +11,9 @@ import org.mg.wekalib.evaluation.alt.Measure;
 
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
-import weka.classifiers.functions.SMO;
-import weka.classifiers.functions.supportVector.PolyKernel;
-import weka.classifiers.functions.supportVector.RBFKernel;
+import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -97,7 +96,7 @@ public class InnerCVClassifier extends AbstractClassifier
 	{
 		//String f = "/home/martin/workspace/DreamChallenge/cache/Top10Sy.QuarterWt.Cellline_Drug_Gex.train.arff";
 		//		String f = "/home/martin/workspace/external/weka-3-7-12/data/iris.arff";
-		String f = "/home/martin/workspace/external/weka-3-7-12/data/breast-cancer.arff";
+		String f = "/home/martin/data/weka/nominal/breast-cancer.arff";
 		//String f = "/home/martin/workspace/external/weka-3-7-12/data/cpu.arff";
 		Instances inst = new Instances(new FileReader(f));
 		inst.setClassIndex(inst.numAttributes() - 1);
@@ -111,32 +110,36 @@ public class InnerCVClassifier extends AbstractClassifier
 		cv.setMeasure(ClassificationMeasure.AUC);
 		List<Classifier> classifiers = new ArrayList<>();
 		List<String> names = new ArrayList<>();
-		for (Double c : new Double[] { 0.01, 0.1, 1.0, 10.0 })
-		{
-			for (Double g : new Double[] { 0.01, 0.1, 1.0, 10.0 })
-			{
-				for (boolean rbf : new boolean[] { true, false })
-				{
-					SMO smo = new SMO();
-					smo.setC(c);
-					String name = "SMO c" + c;
-					if (!rbf && g != 1.0)
-						continue;
-					smo.setKernel(rbf ? new RBFKernel() : new PolyKernel());
-					if (rbf)
-					{
-						((RBFKernel) smo.getKernel()).setGamma(g);
-						name += " rbf g" + g;
-					}
-					else
-						name += " poly";
-					classifiers.add(smo);
-					names.add(name);
-				}
-			}
-		}
+		//		for (Double c : new Double[] { 0.01, 0.1, 1.0, 10.0 })
+		//		{
+		//			for (Double g : new Double[] { 0.01, 0.1, 1.0, 10.0 })
+		//			{
+		//				for (boolean rbf : new boolean[] { true, false })
+		//				{
+		//					SMO smo = new SMO();
+		//					smo.setC(c);
+		//					String name = "SMO c" + c;
+		//					if (!rbf && g != 1.0)
+		//						continue;
+		//					smo.setKernel(rbf ? new RBFKernel() : new PolyKernel());
+		//					if (rbf)
+		//					{
+		//						((RBFKernel) smo.getKernel()).setGamma(g);
+		//						name += " rbf g" + g;
+		//					}
+		//					else
+		//						name += " poly";
+		//					classifiers.add(smo);
+		//					names.add(name);
+		//				}
+		//			}
+		//		}
 		classifiers.add(new RandomForest());
 		names.add("Random Forest");
+		classifiers.add(new NaiveBayes());
+		names.add("Naive Bayes");
+		classifiers.add(new IBk());
+		names.add("KNN");
 		//		classifiers.add(new LinearRegression());
 		//		names.add("LinearRegression");
 		//		classifiers.add(new M5P());
@@ -146,7 +149,7 @@ public class InnerCVClassifier extends AbstractClassifier
 		cv.setClassifiers(classifiers, names);
 
 		Evaluation eval = new Evaluation(inst);
-		eval.crossValidateModel(cv, inst, 5, new Random(1), new Object[0]);
+		eval.crossValidateModel(cv, inst, 10, new Random(1), new Object[0]);
 
 		System.out.println("Final cross-validated performance: "
 				+ StringUtil.formatDouble(cv.getMeasure().getValue(eval, 1)) + "\n");

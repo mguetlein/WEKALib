@@ -12,6 +12,8 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.ConditionalDensityEstimator;
 import weka.classifiers.Evaluation;
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.classifiers.evaluation.Prediction;
 import weka.classifiers.evaluation.output.prediction.AbstractOutput;
 import weka.classifiers.meta.RegressionByDiscretization;
 import weka.core.BatchPredictor;
@@ -151,6 +153,21 @@ public class CVPredictionsEvaluation extends Evaluation
 					double conf = Double.NaN;
 					if (classifier instanceof ConditionalDensityEstimator)
 						conf = ((ConditionalDensityEstimator) classifier).logDensity(data.instance(i), predictions[i]);
+					else
+					{
+						Prediction p = m_Predictions.get(i);
+						if (p instanceof NominalPrediction)
+						{
+							if (predictions[i] == 0.0)
+								conf = ((NominalPrediction) p).distribution()[0];
+							else if (predictions[i] == 1.0)
+								conf = 1 - ((NominalPrediction) p).distribution()[1];
+							else
+								throw new IllegalStateException(
+										"prediction conf not yet implemented for non-binary class");
+						}
+					}
+
 					PredictionUtil.add(cvPredictions, data.instance(i).classValue(), predictions[i], conf, fold,
 							origTestIndices.isEmpty() ? -1 : origTestIndices.get(i));
 					// --- changes by MG - end ------------------------------------

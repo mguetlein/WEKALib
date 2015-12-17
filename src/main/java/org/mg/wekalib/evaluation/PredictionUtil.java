@@ -10,10 +10,39 @@ import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.util.FastMath;
 import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
 import org.mg.wekautil.Predictions;
 
 public class PredictionUtil
 {
+	public static Predictions concat(Predictions p1, Predictions p2)
+	{
+		if (p1.actual == null)
+		{
+			p1.actual = new double[0];
+			p1.predicted = new double[0];
+			p1.confidence = new double[0];
+			p1.fold = new int[0];
+			p1.origIndex = new int[0];
+		}
+		if (p2.actual == null)
+		{
+			p2.actual = new double[0];
+			p2.predicted = new double[0];
+			p2.confidence = new double[0];
+			p2.fold = new int[0];
+			p2.origIndex = new int[0];
+		}
+		Predictions p = new Predictions();
+		p.fold = ArrayUtil.concat(p1.fold, p2.fold);
+		p.actual = ArrayUtil.concat(p1.actual, p2.actual);
+		p.predicted = ArrayUtil.concat(p1.predicted, p2.predicted);
+		p.confidence = ArrayUtil.concat(p1.confidence, p2.confidence);
+		p.origIndex = ArrayUtil.concat(p1.origIndex, p2.origIndex);
+		return p;
+	}
+
 	public static Predictions clone(Predictions pred)
 	{
 		Predictions p = new Predictions();
@@ -638,6 +667,19 @@ public class PredictionUtil
 			if (!Double.isNaN(p.actual[i]))
 				add(p2, p, i);
 		return p2;
+	}
+
+	public static String summaryClassification(Predictions pf)
+	{
+		StringBuffer bf = new StringBuffer();
+		bf.append(pf.actual.length + " predictions\n");
+		bf.append("fold: " + CountedSet.create(ArrayUtil.toIntegerArray(pf.fold)) + "\n");
+		bf.append("actual: " + CountedSet.create(ArrayUtil.toDoubleArray(pf.actual)) + "\n");
+		bf.append("predicted: " + CountedSet.create(ArrayUtil.toDoubleArray(pf.predicted)) + "\n");
+		bf.append("confidence: " + DoubleArraySummary.create(pf.confidence) + "\n");
+		bf.append("accuracy: " + accuracy(pf) + "\n");
+		bf.append("auc: " + AUC(pf) + "\n");
+		return bf.toString();
 	}
 
 }
