@@ -1,8 +1,8 @@
 package org.mg.wekalib.eval2;
 
-import org.mg.javalib.util.HashUtil;
+import org.mg.wekalib.eval2.util.Blocker;
+import org.mg.wekalib.eval2.util.Printer;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
-import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
@@ -32,22 +32,30 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	}
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return HashUtil.hashCode(getWekaClassifer().getClass().getSimpleName(), getParamKey(), train, test);
+		StringBuffer b = new StringBuffer();
+		b.append(getWekaClassifer().getClass().getSimpleName());
+		b.append('#');
+		b.append(getParamKey());
+		b.append('#');
+		b.append(train == null ? null : train.key());
+		b.append('#');
+		b.append(test == null ? null : test.key());
+		return b.toString();
 	}
 
 	@Override
 	public Runnable nextJob() throws Exception
 	{
-		if (!Blocker.block(hashCode()))
+		if (!Blocker.block(key()))
 			return null;
 		return new Runnable()
 		{
 			public void run()
 			{
 				validateModel();
-				Blocker.unblock(AbstractModel.this.hashCode());
+				Blocker.unblock(AbstractModel.this.key());
 			};
 		};
 	}
@@ -59,13 +67,12 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 			Classifier classifier = getWekaClassifer();
 			Instances trainI = train.getWekaInstances();
 			Instances testI = test.getWekaInstances();
-			System.out.println(hashCode() + " building model " + getName() + " on " + trainI.relationName() + " key: "
-					+ hashCode());
+			Printer.println("building model " + getName() + " on " + trainI.relationName() + " " + key());
 			classifier.buildClassifier(trainI);
 			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(trainI);
 			eval.evaluateModel(classifier, testI);
 			Predictions p = eval.getCvPredictions();
-			System.err.println(PredictionUtil.summaryClassification(p));
+			//			System.err.println(PredictionUtil.summaryClassification(p));
 			setResult(p);
 		}
 		catch (Exception e)
@@ -81,7 +88,7 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 
 	public abstract Classifier getWekaClassifer();
 
-	public abstract int getParamKey();
+	public abstract String getParamKey();
 
 	@Override
 	public void setTrainingDataset(DataSet train)

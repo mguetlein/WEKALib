@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import weka.core.Attribute;
 import weka.core.Instances;
 
@@ -12,12 +14,12 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	private static final long serialVersionUID = 1L;
 
 	Instances inst;
-	int hashCode;
+	String key;
 
 	public WekaInstancesDataSet(Instances inst)
 	{
 		this.inst = inst;
-		hashCode = inst.toString().hashCode();
+		key = DigestUtils.md5Hex(inst.toString());
 	}
 
 	@Override
@@ -33,9 +35,9 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	//	}
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return hashCode;
+		return key;
 	}
 
 	@Override

@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mg.javalib.datamining.ResultSet;
-import org.mg.javalib.util.ArrayUtil;
-import org.mg.javalib.util.HashUtil;
+import org.mg.wekalib.eval2.util.Blocker;
+import org.mg.wekalib.eval2.util.Printer;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.core.Instances;
 
-public class CVEvaluator extends DefaultJobOwner<Integer>
+public class CVEvaluator extends DefaultJobOwner<String>
 {
 	DataSet dataSet;
 	Model models[];
@@ -31,13 +31,20 @@ public class CVEvaluator extends DefaultJobOwner<Integer>
 	}
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		Object[] os = new Object[] { numFolds, repetitions, dataSet };
-		os = ArrayUtil.concat(Object.class, os, models);
-		//		if (featureProviders != null)
-		//			os = ArrayUtil.concat(Object.class, os, featureProviders);
-		return HashUtil.hashCode(os);
+		StringBuffer b = new StringBuffer();
+		b.append(numFolds);
+		b.append('#');
+		b.append(repetitions);
+		b.append('#');
+		b.append(dataSet == null ? null : dataSet.key());
+		for (Model m : models)
+		{
+			b.append('#');
+			b.append(m.key());
+		}
+		return b.toString();
 	}
 
 	private List<CV> cvs;
@@ -80,21 +87,22 @@ public class CVEvaluator extends DefaultJobOwner<Integer>
 				allDone = false;
 				final Runnable run = cv.nextJob();
 				if (run != null)
-					return run;
+					return Printer.wrapRunnable("CVEval: cv " + ((getCVs().indexOf(cv)) + 1) + "/" + getCVs().size(),
+							run);
 			}
 		}
 		if (allDone)
 		{
-			if (!Blocker.block(hashCode()))
+			if (!Blocker.block(key()))
 				return null;
 			return new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					System.out.println(CVEvaluator.this.hashCode() + " storing cv evaluation");
+					Printer.println("CVEval: storing results" + CVEvaluator.this.key());
 					store();
-					Blocker.unblock(CVEvaluator.this.hashCode());
+					Blocker.unblock(CVEvaluator.this.key());
 				}
 			};
 		}
@@ -114,11 +122,11 @@ public class CVEvaluator extends DefaultJobOwner<Integer>
 				for (Predictions p : PredictionUtil.perFold(cv.getResult()))
 				{
 					int idx = rs.addResult();
-					rs.setResultValue(idx, "ModelKey", cv.getModel().hashCode());
+					rs.setResultValue(idx, "ModelKey", cv.getModel().key());
 					rs.setResultValue(idx, "ModelName", cv.getModel().getName());
 					//					if (cv.getFeatureProvider() != null)
 					//					{
-					//						rs.setResultValue(idx, "FeatureKey", cv.getFeatureProvider().hashCode());
+					//						rs.setResultValue(idx, "FeatureKey", cv.getFeatureProvider().key());
 					//						rs.setResultValue(idx, "FeatureName", cv.getFeatureProvider().getName());
 					//					}
 					rs.setResultValue(idx, "CVSeed", cv.getRandomSeed());
@@ -129,7 +137,7 @@ public class CVEvaluator extends DefaultJobOwner<Integer>
 		}
 
 		rs = rs.join("ModelKey");
-		int maxAucK = -1;
+		String maxAucK = null;
 		double maxAucV = 0.0;
 		for (int i = 0; i < rs.getNumResults(); i++)
 		{
@@ -137,27 +145,27 @@ public class CVEvaluator extends DefaultJobOwner<Integer>
 			if (auc > maxAucV)
 			{
 				maxAucV = auc;
-				maxAucK = (Integer) rs.getResultValue(i, "ModelKey");
+				maxAucK = rs.getResultValue(i, "ModelKey").toString();
 			}
 		}
-		System.err.println("results:\n" + rs.toNiceString());
+		//System.err.println("results:\n" + rs.toNiceString());
 		setResult(maxAucK);
-		getBestModel();
+		Model m = getBestModel();
+		Printer.println("best model:\n" + m.getName());
 	}
 
 	public Model getBestModel()
 	{
-		Integer result = getResult();
+		String result = getResult();
 		Model m = null;
 		for (CV cv : getCVs())
 		{
-			if (cv.getModel().hashCode() == result)
+			if (cv.getModel().key().equals(result))
 			{
 				m = cv.getModel();
 				break;
 			}
 		}
-		System.err.println("max model:\n" + m.getName());
 		return m;
 	}
 

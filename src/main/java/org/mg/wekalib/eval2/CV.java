@@ -2,7 +2,8 @@ package org.mg.wekalib.eval2;
 
 import java.io.FileReader;
 
-import org.mg.javalib.util.HashUtil;
+import org.mg.wekalib.eval2.util.Blocker;
+import org.mg.wekalib.eval2.util.Printer;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
@@ -10,17 +11,17 @@ import weka.core.Instances;
 
 public class CV extends DefaultJobOwner<Predictions>
 {
-	DataSet d;
+	DataSet dataSet;
 	//	FeatureProvider featureProvider;
-	Model m;
+	Model model;
 	int numFolds = 10;
 	long randomSeed = 1;
 
 	public CV cloneCV()
 	{
 		CV cv = new CV();
-		cv.setDataSet(d);
-		cv.setModel(m);
+		cv.setDataSet(dataSet);
+		cv.setModel(model);
 		//		cv.setFeatureProvider(featureProvider);
 		cv.setNumFolds(numFolds);
 		cv.setRandomSeed(randomSeed);
@@ -37,7 +38,7 @@ public class CV extends DefaultJobOwner<Predictions>
 
 	private Model getModel(int fold)
 	{
-		Model mod = m.cloneModel();
+		Model mod = model.cloneModel();
 		//		if (featureProvider != null)
 		//		{
 		//			DataSet res[] = getFeatureProvider(fold).getResult();
@@ -46,16 +47,24 @@ public class CV extends DefaultJobOwner<Predictions>
 		//		}
 		//		else
 		//		{
-		mod.setTrainingDataset(d.getTrainFold(numFolds, randomSeed, fold));
-		mod.setTestDataset(d.getTestFold(numFolds, randomSeed, fold));
+		mod.setTrainingDataset(dataSet.getTrainFold(numFolds, randomSeed, fold));
+		mod.setTestDataset(dataSet.getTestFold(numFolds, randomSeed, fold));
 		//		}
 		return mod;
 	}
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return HashUtil.hashCode(d, m, /*featureProvider,*/numFolds, randomSeed);
+		StringBuffer b = new StringBuffer();
+		b.append(dataSet.key());
+		b.append('#');
+		b.append(model.key());
+		b.append('#');
+		b.append(numFolds);
+		b.append('#');
+		b.append(randomSeed);
+		return b.toString();
 	}
 
 	@Override
@@ -87,22 +96,24 @@ public class CV extends DefaultJobOwner<Predictions>
 				allDone = false;
 				Runnable r = mod.nextJob();
 				if (r != null)
-					return r;
+				{
+					return Printer.wrapRunnable("CV: fold " + (f + 1) + "/" + numFolds + ", seed " + randomSeed, r);
+				}
 			}
 		}
 
 		if (allDone)
 		{
-			if (!Blocker.block(CV.this.hashCode()))
+			if (!Blocker.block(CV.this.key()))
 				return null;
 			return new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					System.out.println(CV.this.hashCode() + " storing cv results");
+					Printer.println("CV: storing results " + CV.this.key());
 					store();
-					Blocker.unblock(CV.this.hashCode());
+					Blocker.unblock(CV.this.key());
 				}
 			};
 		}
@@ -119,23 +130,23 @@ public class CV extends DefaultJobOwner<Predictions>
 				p.fold[i] = f;
 			pred = PredictionUtil.concat(pred, p);
 		}
-		System.err.println(PredictionUtil.summaryClassification(pred));
+		//		System.err.println(PredictionUtil.summaryClassification(pred));
 		setResult(pred);
 	}
 
 	public Model getModel()
 	{
-		return m;
+		return model;
 	}
 
 	public void setModel(Model mod)
 	{
-		m = mod;
+		model = mod;
 	}
 
 	public void setDataSet(DataSet data)
 	{
-		d = data;
+		dataSet = data;
 	}
 
 	//	public void setFeatureProvider(FeatureProvider featureProvider)
@@ -182,9 +193,11 @@ public class CV extends DefaultJobOwner<Predictions>
 					r = null;
 			}
 		}
-		System.out.println(cv.hashCode());
 		if (cv.isDone())
+		{
+			System.out.println("cv done " + cv.key());
 			System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
+		}
 
 		//		for (int i = 0; i < cv.numFolds; i++)
 		//		{

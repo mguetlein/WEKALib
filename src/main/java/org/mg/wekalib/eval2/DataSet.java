@@ -6,6 +6,8 @@ import weka.core.Instances;
 
 public interface DataSet
 {
+	public String key();
+
 	public DataSet getTrainFold(int numFolds, long randomSeed, int fold);
 
 	public DataSet getTestFold(int numFolds, long randomSeed, int fold);

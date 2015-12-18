@@ -1,7 +1,7 @@
 package org.mg.wekalib.eval2;
 
-import org.mg.javalib.util.HashUtil;
-import org.mg.wekalib.evaluation.PredictionUtil;
+import org.mg.wekalib.eval2.util.Blocker;
+import org.mg.wekalib.eval2.util.Printer;
 import org.mg.wekautil.Predictions;
 
 public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
@@ -13,9 +13,15 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 	DataSet test;
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return HashUtil.hashCode(cvEval, train, test);
+		StringBuffer b = new StringBuffer();
+		b.append(cvEval.key());
+		b.append('#');
+		b.append(train == null ? null : train.key());
+		b.append('#');
+		b.append(test == null ? null : test.key());
+		return b.toString();
 	}
 
 	@Override
@@ -24,25 +30,25 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		CVEvaluator cv = cvEval.cloneCVEvaluator();
 		cv.setDataSet(train);
 		if (!cv.isDone())
-			return cv.nextJob();
+			return Printer.wrapRunnable("CVEvalModel: inner CV", cv.nextJob());
 
 		final Model best = cv.getBestModel().cloneModel();
 		best.setTrainingDataset(train);
 		best.setTestDataset(test);
 		if (!best.isDone())
-			return best.nextJob();
+			return Printer.wrapRunnable("CVEvalModel: build model", best.nextJob());
 
-		if (!Blocker.block(hashCode()))
+		if (!Blocker.block(key()))
 			return null;
 		return new Runnable()
 		{
 			public void run()
 			{
-				System.out.println(CVEvalModel.this.hashCode() + " store cv eval model result");
+				Printer.println("CVEvalModel: store model result " + CVEvalModel.this.key());
 				Predictions p = best.getResult();
-				System.err.println(PredictionUtil.summaryClassification(p));
+				//System.err.println(PredictionUtil.summaryClassification(p));
 				setResult(p);
-				Blocker.unblock(CVEvalModel.this.hashCode());
+				Blocker.unblock(CVEvalModel.this.key());
 			};
 		};
 	}

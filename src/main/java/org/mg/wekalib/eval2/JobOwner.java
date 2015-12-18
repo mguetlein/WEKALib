@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public interface JobOwner<R extends Serializable>
 {
-	public int hashCode();
+	public String key();
 
 	public boolean isDone();
 

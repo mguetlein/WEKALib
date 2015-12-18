@@ -18,9 +18,9 @@ public class RandomForestModel extends AbstractModel
 	}
 
 	@Override
-	public int getParamKey()
+	public String getParamKey()
 	{
-		return numTrees;
+		return Integer.toString(numTrees);
 	}
 
 }

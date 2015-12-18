@@ -8,9 +8,9 @@ public class NaiveBayesModel extends AbstractModel
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public int getParamKey()
+	public String getParamKey()
 	{
-		return 0;
+		return "";
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package org.mg.wekalib.eval2;
 
-import org.mg.javalib.util.HashUtil;
-import org.mg.wekalib.evaluation.PredictionUtil;
+import org.mg.wekalib.eval2.util.Blocker;
+import org.mg.wekalib.eval2.util.Printer;
 import org.mg.wekautil.Predictions;
 
 public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
@@ -14,9 +14,17 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	DataSet test;
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return HashUtil.hashCode(featureProvider, model, train, test);
+		StringBuffer b = new StringBuffer();
+		b.append(featureProvider.key());
+		b.append('#');
+		b.append(model.key());
+		b.append('#');
+		b.append(train == null ? null : train.key());
+		b.append('#');
+		b.append(test == null ? null : test.key());
+		return b.toString();
 	}
 
 	@Override
@@ -26,27 +34,27 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 		feat.setTrainingDataset(train);
 		feat.setTestDataset(test);
 		if (!feat.isDone())
-			return feat.nextJob();
+			return Printer.wrapRunnable("FeatureModel: compute features", feat.nextJob());
 
 		final Model mod = model.cloneModel();
 		DataSet res[] = feat.getResult();
 		mod.setTrainingDataset(res[0]);
 		mod.setTestDataset(res[1]);
 		if (!mod.isDone())
-			return mod.nextJob();
+			return Printer.wrapRunnable("FeatureModel: build model", mod.nextJob());
 
-		if (!Blocker.block(hashCode()))
+		if (!Blocker.block(key()))
 			return null;
 		return new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				System.out.println(FeatureModel.this.hashCode() + " storing feature model results");
+				Printer.println("FeatureModel: storing results " + FeatureModel.this.key());
 				Predictions p = mod.getResult();
-				System.err.println(PredictionUtil.summaryClassification(p));
+				//				System.err.println(PredictionUtil.summaryClassification(p));
 				setResult(p);
-				Blocker.unblock(FeatureModel.this.hashCode());
+				Blocker.unblock(FeatureModel.this.key());
 			}
 		};
 	}

@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 public class Predictions implements Serializable
 {
-	public static final long serialVersionUID = 4L;
+	public static final long serialVersionUID = 4156859784481976748L;
 
 	public double actual[];
 	public double predicted[];

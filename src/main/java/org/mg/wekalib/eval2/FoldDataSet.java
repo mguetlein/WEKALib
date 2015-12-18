@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.mg.javalib.util.ArrayUtil;
-import org.mg.javalib.util.HashUtil;
+import org.mg.wekalib.eval2.util.Printer;
 
 import weka.core.Instances;
 
@@ -36,9 +36,19 @@ public class FoldDataSet extends AbstractDataSet
 	//	}
 
 	@Override
-	public int hashCode()
+	public String key()
 	{
-		return HashUtil.hashCode(parent, numFolds, randomSeed, fold, train);
+		StringBuffer b = new StringBuffer();
+		b.append(parent.key());
+		b.append('#');
+		b.append(numFolds);
+		b.append('#');
+		b.append(randomSeed);
+		b.append('#');
+		b.append(fold);
+		b.append('#');
+		b.append(train);
+		return b.toString();
 	}
 
 	public int getFold()
@@ -62,7 +72,8 @@ public class FoldDataSet extends AbstractDataSet
 	{
 		if (self == null)
 		{
-			System.out.println("creating folds " + numFolds + " " + randomSeed + " " + fold + " " + train);
+			Printer.println("FoldDataset: creating " + (train ? "train" : "test") + " fold " + (fold + 1) + "/"
+					+ numFolds + ", seed " + randomSeed);
 			Integer[] idx = ArrayUtil.toIntegerArray(ArrayUtil.indexArray(parent.getSize()));
 			ArrayUtil.scramble(idx, new Random(randomSeed));
 			List<Integer[]> cvIdx = ArrayUtil.split(idx, numFolds);
