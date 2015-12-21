@@ -1,26 +1,28 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.model;
 
-import org.mg.wekalib.eval2.util.Blocker;
-import org.mg.wekalib.eval2.util.Printer;
+import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.functions.SMO;
 import weka.core.Instances;
+import weka.filters.Filter;
+import weka.filters.unsupervised.instance.NonSparseToSparse;
 
 public abstract class AbstractModel extends DefaultJobOwner<Predictions> implements Model
 {
-	private static final long serialVersionUID = 1L;
-
 	protected DataSet train;
 	protected DataSet test;
 
 	@Override
-	public Model cloneModel()
+	public Model cloneJob()
 	{
 		try
 		{
 			Model m = this.getClass().newInstance();
+			cloneParams(m);
 			m.setTestDataset(test);
 			m.setTrainingDataset(train);
 			return m;
@@ -32,32 +34,21 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	}
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		StringBuffer b = new StringBuffer();
-		b.append(getWekaClassifer().getClass().getSimpleName());
-		b.append('#');
-		b.append(getParamKey());
-		b.append('#');
-		b.append(train == null ? null : train.key());
-		b.append('#');
-		b.append(test == null ? null : test.key());
-		return b.toString();
+		return getKey(getWekaClassifer().getClass().getSimpleName(), getParamKey(), train, test);
 	}
 
 	@Override
 	public Runnable nextJob() throws Exception
 	{
-		if (!Blocker.block(key()))
-			return null;
-		return new Runnable()
+		return blockedJob("Model: building " + getName() + " on " + train.getName(), new Runnable()
 		{
 			public void run()
 			{
 				validateModel();
-				Blocker.unblock(AbstractModel.this.key());
 			};
-		};
+		});
 	}
 
 	private void validateModel()
@@ -67,7 +58,15 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 			Classifier classifier = getWekaClassifer();
 			Instances trainI = train.getWekaInstances();
 			Instances testI = test.getWekaInstances();
-			Printer.println("building model " + getName() + " on " + trainI.relationName() + " " + key());
+			if (classifier instanceof SMO)
+			{
+				//				System.err.print("filtering..");
+				NonSparseToSparse filter = new NonSparseToSparse();
+				filter.setInputFormat(trainI);
+				trainI = Filter.useFilter(trainI, filter);
+				testI = Filter.useFilter(testI, filter);
+				//				System.err.println("..done");
+			}
 			classifier.buildClassifier(trainI);
 			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(trainI);
 			eval.evaluateModel(classifier, testI);
@@ -88,7 +87,9 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 
 	public abstract Classifier getWekaClassifer();
 
-	public abstract String getParamKey();
+	protected abstract String getParamKey();
+
+	protected abstract void cloneParams(Model clonedModel);
 
 	@Override
 	public void setTrainingDataset(DataSet train)

@@ -2,125 +2,84 @@ package org.mg.wekalib.eval2;
 
 import java.io.FileReader;
 
-import org.mg.wekalib.eval2.util.Blocker;
-import org.mg.wekalib.eval2.util.Printer;
+import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
+import org.mg.wekalib.eval2.job.DataSetJobOwner;
+import org.mg.wekalib.eval2.job.DefaultJobOwner;
+import org.mg.wekalib.eval2.job.Printer;
+import org.mg.wekalib.eval2.model.Model;
+import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.core.Instances;
 
-public class CV extends DefaultJobOwner<Predictions>
+public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<Predictions>
 {
 	DataSet dataSet;
-	//	FeatureProvider featureProvider;
 	Model model;
 	int numFolds = 10;
 	long randomSeed = 1;
 
-	public CV cloneCV()
+	public CV cloneJob()
 	{
 		CV cv = new CV();
 		cv.setDataSet(dataSet);
 		cv.setModel(model);
-		//		cv.setFeatureProvider(featureProvider);
 		cv.setNumFolds(numFolds);
 		cv.setRandomSeed(randomSeed);
 		return cv;
 	}
 
-	//	private FeatureProvider getFeatureProvider(int fold)
-	//	{
-	//		FeatureProvider feat = featureProvider.cloneFeatureProvider();
-	//		feat.setTrainingDataset(d.getTrainFold(numFolds, randomSeed, fold));
-	//		feat.setTestDataset(d.getTestFold(numFolds, randomSeed, fold));
-	//		return feat;
-	//	}
-
 	private Model getModel(int fold)
 	{
-		Model mod = model.cloneModel();
-		//		if (featureProvider != null)
-		//		{
-		//			DataSet res[] = getFeatureProvider(fold).getResult();
-		//			mod.setTrainingDataset(res[0]);
-		//			mod.setTestDataset(res[1]);
-		//		}
-		//		else
-		//		{
-		mod.setTrainingDataset(dataSet.getTrainFold(numFolds, randomSeed, fold));
-		mod.setTestDataset(dataSet.getTestFold(numFolds, randomSeed, fold));
-		//		}
-		return mod;
+		Model m = (Model) model.cloneJob();
+		m.setTrainingDataset(dataSet.getTrainFold(numFolds, randomSeed, fold));
+		m.setTestDataset(dataSet.getTestFold(numFolds, randomSeed, fold));
+		return m;
 	}
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		StringBuffer b = new StringBuffer();
-		b.append(dataSet.key());
-		b.append('#');
-		b.append(model.key());
-		b.append('#');
-		b.append(numFolds);
-		b.append('#');
-		b.append(randomSeed);
-		return b.toString();
+		return getKey(dataSet, model, numFolds, randomSeed);
 	}
 
 	@Override
 	public Runnable nextJob() throws Exception
 	{
+		if (dataSet == null)
+			throw new NullPointerException("set dataset first");
+
 		// run cv
 		boolean allDone = true;
 		for (int f = 0; f < numFolds; f++)
 		{
-			//			if (featureProvider != null)
-			//			{
-			//				FeatureProvider feat = getFeatureProvider(f);
-			//				if (!feat.isDone())
-			//				{
-			//					allDone = false;
-			//					Runnable r = feat.nextJob();
-			//					if (r != null)
-			//						return r;
-			//					else
-			//						continue;
-			//				}
-			//			}
-
-			Model mod = getModel(f);
-			if (!mod.isDone())
+			Model m = getModel(f);
+			if (!m.isDone())
 			{
-				//				System.out.println(model.getTrainingDataset());
-				//				System.out.println(model.getFeatureProvider().getTrainingDataset());
 				allDone = false;
-				Runnable r = mod.nextJob();
+				Runnable r = m.nextJob();
 				if (r != null)
-				{
 					return Printer.wrapRunnable("CV: fold " + (f + 1) + "/" + numFolds + ", seed " + randomSeed, r);
-				}
 			}
 		}
 
 		if (allDone)
 		{
-			if (!Blocker.block(CV.this.key()))
-				return null;
-			return new Runnable()
+			return blockedJob("CV: storing results", new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					Printer.println("CV: storing results " + CV.this.key());
 					store();
-					Blocker.unblock(CV.this.key());
 				}
-			};
+			});
 		}
 		return null;
 	}
 
-	protected void store()
+	private void store()
 	{
 		Predictions pred = new Predictions();
 		for (int f = 0; f < numFolds; f++)
@@ -144,20 +103,11 @@ public class CV extends DefaultJobOwner<Predictions>
 		model = mod;
 	}
 
+	@Override
 	public void setDataSet(DataSet data)
 	{
 		dataSet = data;
 	}
-
-	//	public void setFeatureProvider(FeatureProvider featureProvider)
-	//	{
-	//		this.featureProvider = featureProvider;
-	//	}
-	//
-	//	public FeatureProvider getFeatureProvider()
-	//	{
-	//		return featureProvider;
-	//	}
 
 	public long getRandomSeed()
 	{
@@ -176,60 +126,13 @@ public class CV extends DefaultJobOwner<Predictions>
 
 	public static void main(String[] args) throws Exception
 	{
-		final CV cv = new CV();
+		CV cv = new CV();
 		Instances inst = new Instances(new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		cv.setDataSet(new WekaInstancesDataSet(inst));
 		cv.setModel(new RandomForestModel());
-		if (!cv.isDone())
-		{
-			Runnable r = cv.nextJob();
-			while (r != null)
-			{
-				r.run();
-				if (!cv.isDone())
-					r = cv.nextJob();
-				else
-					r = null;
-			}
-		}
-		if (cv.isDone())
-		{
-			System.out.println("cv done " + cv.key());
-			System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
-		}
+		cv.runSequentially();
+		System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
 
-		//		for (int i = 0; i < cv.numFolds; i++)
-		//		{
-		//			Thread th = new Thread(new Runnable()
-		//			{
-		//				@Override
-		//				public void run()
-		//				{
-		//					try
-		//					{
-		//						CV c = cv.cloneCV();
-		//						if (!c.isDone())
-		//						{
-		//							Runnable r = c.nextJob();
-		//							if (r != null)
-		//								r.run();
-		//						}
-		//					}
-		//					catch (Exception e)
-		//					{
-		//						throw new RuntimeException(e);
-		//					}
-		//				}
-		//			});
-		//			th.start();
-		//			//			ThreadUtil.sleep(100);
-		//		}
-		//		while (!cv.isDone())
-		//		{
-		//			ThreadUtil.sleep(100);
-		//			System.out.println("not yet done");
-		//		}
-		//		System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
 	}
 }

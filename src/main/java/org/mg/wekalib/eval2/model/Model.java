@@ -1,13 +1,11 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.model;
 
-import java.io.Serializable;
-
+import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.job.JobOwner;
 import org.mg.wekautil.Predictions;
 
-public interface Model extends JobOwner<Predictions>, Serializable
+public interface Model extends JobOwner<Predictions> //, Serializable
 {
-	public Model cloneModel();
-
 	//	public void setFeatureProvider(FeatureProvider p);
 
 	public void setTrainingDataset(DataSet train);

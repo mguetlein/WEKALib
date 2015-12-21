@@ -1,4 +1,4 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.data;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,9 +35,9 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	//	}
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		return key;
+		return getKey(key);
 	}
 
 	@Override

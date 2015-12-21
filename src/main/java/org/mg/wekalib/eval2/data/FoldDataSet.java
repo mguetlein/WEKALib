@@ -1,11 +1,11 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.mg.javalib.util.ArrayUtil;
-import org.mg.wekalib.eval2.util.Printer;
+import org.mg.wekalib.eval2.job.Printer;
 
 import weka.core.Instances;
 
@@ -36,19 +36,9 @@ public class FoldDataSet extends AbstractDataSet
 	//	}
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		StringBuffer b = new StringBuffer();
-		b.append(parent.key());
-		b.append('#');
-		b.append(numFolds);
-		b.append('#');
-		b.append(randomSeed);
-		b.append('#');
-		b.append(fold);
-		b.append('#');
-		b.append(train);
-		return b.toString();
+		return getKey(parent, numFolds, randomSeed, fold, train);
 	}
 
 	public int getFold()

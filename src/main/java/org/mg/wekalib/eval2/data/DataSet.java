@@ -1,18 +1,16 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.data;
 
 import java.util.List;
 
+import org.mg.wekalib.eval2.job.KeyProvider;
+
 import weka.core.Instances;
 
-public interface DataSet
+public interface DataSet extends KeyProvider
 {
-	public String key();
-
 	public DataSet getTrainFold(int numFolds, long randomSeed, int fold);
 
 	public DataSet getTestFold(int numFolds, long randomSeed, int fold);
-
-	//	public DataSet cloneDataset();
 
 	public Instances getWekaInstances();
 
@@ -21,5 +19,4 @@ public interface DataSet
 	public int getSize();
 
 	public String getName();
-
 }

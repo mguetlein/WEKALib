@@ -1,4 +1,4 @@
-package org.mg.wekalib.eval2.util;
+package org.mg.wekalib.eval2.job;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,16 +7,17 @@ import java.io.PrintStream;
 public class Printer
 {
 	private static int indent = 0;
-	//private static PrintStream out = System.out;
+
 	private static ThreadLocal<PrintStream> out = new ThreadLocal<>();
 
 	private static PrintStream out()
 	{
+		//return System.out;
 		if (out.get() == null)
 		{
 			try
 			{
-				out.set(new PrintStream(new File("/tmp/out/" + Thread.currentThread().getId())));
+				out.set(new PrintStream(new File("jobs/out/" + Blocker.getThreadID())));
 			}
 			catch (FileNotFoundException e)
 			{

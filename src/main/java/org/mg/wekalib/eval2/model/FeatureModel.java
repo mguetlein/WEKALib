@@ -1,70 +1,58 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.model;
 
-import org.mg.wekalib.eval2.util.Blocker;
-import org.mg.wekalib.eval2.util.Printer;
+import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.job.DefaultJobOwner;
+import org.mg.wekalib.eval2.job.FeatureProvider;
+import org.mg.wekalib.eval2.job.Printer;
 import org.mg.wekautil.Predictions;
 
 public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 {
-	private static final long serialVersionUID = 1L;
-
 	FeatureProvider featureProvider;
 	Model model;
 	DataSet train;
 	DataSet test;
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		StringBuffer b = new StringBuffer();
-		b.append(featureProvider.key());
-		b.append('#');
-		b.append(model.key());
-		b.append('#');
-		b.append(train == null ? null : train.key());
-		b.append('#');
-		b.append(test == null ? null : test.key());
-		return b.toString();
+		return getKey(featureProvider, model, train, test);
 	}
 
 	@Override
 	public Runnable nextJob() throws Exception
 	{
-		FeatureProvider feat = featureProvider.cloneFeatureProvider();
+		FeatureProvider feat = (FeatureProvider) featureProvider.cloneJob();
 		feat.setTrainingDataset(train);
 		feat.setTestDataset(test);
 		if (!feat.isDone())
 			return Printer.wrapRunnable("FeatureModel: compute features", feat.nextJob());
 
-		final Model mod = model.cloneModel();
+		final Model mod = (Model) model.cloneJob();
 		DataSet res[] = feat.getResult();
 		mod.setTrainingDataset(res[0]);
 		mod.setTestDataset(res[1]);
 		if (!mod.isDone())
 			return Printer.wrapRunnable("FeatureModel: build model", mod.nextJob());
 
-		if (!Blocker.block(key()))
-			return null;
-		return new Runnable()
+		return blockedJob("FeatureModel: storing results", new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				Printer.println("FeatureModel: storing results " + FeatureModel.this.key());
 				Predictions p = mod.getResult();
 				//				System.err.println(PredictionUtil.summaryClassification(p));
 				setResult(p);
-				Blocker.unblock(FeatureModel.this.key());
 			}
-		};
+		});
 	}
 
 	@Override
-	public Model cloneModel()
+	public Model cloneJob()
 	{
 		FeatureModel fm = new FeatureModel();
-		fm.featureProvider = featureProvider.cloneFeatureProvider();
-		fm.model = model.cloneModel();
+		fm.featureProvider = (FeatureProvider) featureProvider.cloneJob();
+		fm.model = (Model) model.cloneJob();
 		fm.train = train;
 		fm.test = test;
 		return fm;

@@ -14,6 +14,11 @@ import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
 import org.mg.wekautil.Predictions;
 
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.classifiers.evaluation.Prediction;
+import weka.classifiers.evaluation.ThresholdCurve;
+import weka.core.Instances;
+
 public class PredictionUtil
 {
 	public static Predictions concat(Predictions p1, Predictions p2)
@@ -605,19 +610,37 @@ public class PredictionUtil
 		return ArrayUtil.toPrimitiveDoubleArray(pPerFold);
 	}
 
+	private static Instances thresholdCurveInstances(Predictions preds)
+	{
+		ArrayList<Prediction> l = new ArrayList<>();
+		for (int i = 0; i < preds.actual.length; i++)
+		{
+			double p[] = new double[2];
+			double prob = 0.5 + 0.5 * preds.confidence[i];
+			if (preds.predicted[i] == 1.0)
+			{
+				p[1] = prob;
+				p[0] = 1 - prob;
+			}
+			else
+			{
+				p[0] = prob;
+				p[1] = 1 - prob;
+			}
+			l.add(new NominalPrediction(preds.actual[i], p));
+		}
+		ThresholdCurve tc = new ThresholdCurve();
+		return tc.getCurve(l, 0);
+	}
+
 	public static double AUC(Predictions preds)
 	{
-		List<Boolean> a = new ArrayList<>();
-		List<Boolean> p = new ArrayList<>();
-		List<Double> c = new ArrayList<>();
-		for (int j = 0; j < preds.actual.length; j++)
-		{
-			a.add(preds.actual[j] == 1.0);
-			p.add(preds.predicted[j] == 1.0);
-			c.add(preds.confidence[j]);
-		}
-		return AUCComputer.compute(ArrayUtil.toPrimitiveBooleanArray(a), ArrayUtil.toPrimitiveBooleanArray(p),
-				ArrayUtil.toPrimitiveDoubleArray(c));
+		return ThresholdCurve.getROCArea(thresholdCurveInstances(preds));
+	}
+
+	public static double AUPRC(Predictions preds)
+	{
+		return ThresholdCurve.getPRCArea(thresholdCurveInstances(preds));
 	}
 
 	public static double accuracy(Predictions p)

@@ -1,4 +1,4 @@
-package org.mg.wekalib.test;
+package org.mg.wekalib.eval2;
 
 import java.awt.Dimension;
 import java.io.FileReader;
@@ -10,28 +10,27 @@ import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetBoxPlot;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
-import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
+import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
+import org.mg.wekalib.eval2.model.Model;
+import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
-import weka.classifiers.functions.SMO;
-import weka.classifiers.functions.supportVector.PolyKernel;
-import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.Instances;
 
-public class ClassificationTest
+public class ClassificationTest2
 {
 	public static void main(String[] args) throws Exception
 	{
 		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos", "breast-cancer", "breast-w",
 				"colic", "colic.ORIG", "credit-a", "credit-g", "diabetes", "glass", "heart-c", "heart-h",
-				"heart-statlog", "hypothyroid", "ionosphere", "labor", "lymph", "primary-tumor", "segment", "sonar",
-				"soybean", "vehicle", "vote", "vowel", "zoo" };
+				"heart-statlog", "hypothyroid", "ionosphere", "lymph", "primary-tumor", "segment", "sonar", "soybean",
+				"vehicle", "vote", "vowel", "zoo" };
 		//too-big: "letter", "kr-vs-kp", "splice", waveform-5000, "sick"
 		//too-easy: "mushroom"
-		//too-unstable: "hepatitis"
+		//too-unstable: "hepatitis", "labor"
 		//not-working: "iris" "balance-scale
 		ArrayUtil.scramble(datasets);
 
@@ -42,9 +41,10 @@ public class ClassificationTest
 			{
 				while (true)
 				{
-					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset", "AUC");
+					String measure = "AUPRC";
+					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset", measure);
 					bp.setHideMean(true);
-					SwingUtil.showInFrame(bp.getChart(), "AUC", false, new Dimension(1200, 800));
+					SwingUtil.showInFrame(bp.getChart(), measure, false, new Dimension(1200, 800));
 					SwingUtil.waitWhileWindowsVisible();
 				}
 				//				for (Window w : Window.getWindows())
@@ -66,7 +66,7 @@ public class ClassificationTest
 
 		for (int seed = 0; seed < 10; seed++)
 		{
-			for (int i = 0; i < 25; i++) //datasets.length
+			for (int i = 0; i < datasets.length; i++) //datasets.length
 			{
 				run(datasets[i], seed);
 			}
@@ -93,6 +93,7 @@ public class ClassificationTest
 				+ ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
+		WekaInstancesDataSet ds = new WekaInstancesDataSet(inst);
 		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
 
 		if (inst.numInstances() < 30)
@@ -107,85 +108,56 @@ public class ClassificationTest
 		}
 		else
 		{
-			List<Classifier> classifiers = new ArrayList<>();
-			List<String> names = new ArrayList<>();
-			for (boolean rbf : new boolean[] { true, false })
+			List<Model> classifiers = new ArrayList<>();
+			for (int numT : new int[] { 10, 100, 200 }) //10, 20, 40, 80, 
 			{
-				for (Double c : new Double[] { 1.0, 10.0, 100.0 })
-				{
-					for (Double g : new Double[] { 0.001, 0.01, 0.1 })
-					{
-						for (Double e : new Double[] { 1.0, 2.0, 3.0 })
-						{
-							SMO smo = new SMO();
-							smo.setC(c);
-							String name = "SMO ";
-							name += rbf ? " rbf" : " poly";
-							name += " c" + c;
-							if (rbf && c == 0.01)
-								continue;
-							//							if (rbf && c == 0.1 && g == 0.01)
-							//								continue;
-							if (!rbf && g != 0.01)
-								continue;
-							if (rbf && e != 1.0)
-								continue;
-							smo.setKernel(rbf ? new RBFKernel() : new PolyKernel());
-							if (rbf)
-							{
-								((RBFKernel) smo.getKernel()).setGamma(g);
-								name += " g" + g;
-							}
-							else
-							{
-								((PolyKernel) smo.getKernel()).setExponent(e);
-								name += " e" + e;
-							}
-							classifiers.add(smo);
-							names.add(name);
-						}
-					}
-				}
+				RandomForestModel rf = new RandomForestModel();
+				rf.setNumTrees(numT);
+				classifiers.add(rf);
 			}
-			//			classifiers.add(new RandomForest());
-			//			names.add("Random Forest 100");
-			//
-			//			RandomForest rf = new RandomForest();
-			//			rf.setNumTrees(1000);
-			//			classifiers.add(rf);
-			//			names.add("Random Forest 1000");
-			//
-			//			classifiers.add(new NaiveBayes());
-			//			names.add("Naive Bayes");
+
+			//			Double cs[] = new Double[] { 1.0, 10.0, 100.0 };
+			//			for (Double g : new Double[] { 0.001, 0.01, 0.1 })
+			//			{
+			//				for (Double c : cs)
+			//				{
+			//					if (c == 1.0 && g == 0.001) // does not work well
+			//						continue;
+			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+			//					svm.setC(c);
+			//					svm.setKernel(new RBFKernel());
+			//					svm.setGamma(g);
+			//					classifiers.add(svm);
+			//				}
+			//			}
+			//			for (Double e : new Double[] { 1.0 }) // exponent optimizing not needed , 2.0, 3.0
+			//			{
+			//				for (Double c : cs)
+			//				{
+			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+			//					svm.setC(c);
+			//					svm.setKernel(new PolyKernel());
+			//					svm.setExp(e);
+			//					classifiers.add(svm);
+			//				}
+			//			}
 
 			for (int i = 0; i < classifiers.size(); i++)
 			{
-				Classifier classifier = classifiers.get(i);
-				String name = names.get(i);
-
-				//				String name = getName(classifier);
+				String name = classifiers.get(i).getName();
 				System.out.println(name + " " + seed);
-
-				//				for (int i = 0; i < 3; i++)
-				//				{
-				//					System.out.println("rep " + i);
 
 				Instances instX = new Instances(inst);
 				instX.randomize(new Random(seed));
 
-				int trainSize = (int) Math.round(instX.numInstances() * 0.95);
-				int testSize = instX.numInstances() - trainSize;
-				Instances train = new Instances(instX, 0, trainSize);
-				Instances test = new Instances(instX, trainSize, testSize);
-				//				System.out.println(test);
-				classifier.buildClassifier(train);
-
-				CVPredictionsEvaluation eval = new CVPredictionsEvaluation(train);
-				eval.evaluateModel(classifier, test);
-
-				//				eval.crossValidateModel(classifier, inst, 5, new Random(1), new Object[0]);
-
-				Predictions p = eval.getCvPredictions();
+				CV cv = new CV();
+				cv.setDataSet(ds);
+				cv.setModel((Model) classifiers.get(i).cloneJob());
+				cv.setNumFolds(10);
+				cv.setRandomSeed(seed);
+				while (!cv.isDone())
+					cv.nextJob().run();
+				Predictions p = cv.getResult();
 
 				for (Predictions pf : PredictionUtil.perFold(p))
 				{
@@ -195,9 +167,10 @@ public class ClassificationTest
 
 					int idx = res.addResult();
 					res.setResultValue(idx, "Algorithm", name);
-					res.setResultValue(idx, "Dataset", data);
+					res.setResultValue(idx, "Dataset", data + " " + inst.numAttributes());
 					res.setResultValue(idx, "Fold", pf.fold[0]);
 					res.setResultValue(idx, "AUC", PredictionUtil.AUC(pf));
+					res.setResultValue(idx, "AUPRC", PredictionUtil.AUPRC(pf));
 
 				}
 				//				}

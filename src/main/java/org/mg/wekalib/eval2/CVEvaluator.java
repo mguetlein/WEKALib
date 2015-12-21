@@ -5,22 +5,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mg.javalib.datamining.ResultSet;
-import org.mg.wekalib.eval2.util.Blocker;
-import org.mg.wekalib.eval2.util.Printer;
+import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
+import org.mg.wekalib.eval2.job.DataSetJobOwner;
+import org.mg.wekalib.eval2.job.DefaultJobOwner;
+import org.mg.wekalib.eval2.job.Printer;
+import org.mg.wekalib.eval2.model.Model;
+import org.mg.wekalib.eval2.model.NaiveBayesModel;
+import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.core.Instances;
 
-public class CVEvaluator extends DefaultJobOwner<String>
+/**
+ * repeats single cross-validations ({@link CV}) with a range of models and multiple repetitions
+ * result: key of best model
+ */
+public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOwner<String>
 {
 	DataSet dataSet;
 	Model models[];
-	//	FeatureProvider featureProviders[];
 	int numFolds = 10;
 	int repetitions = 3;
 
-	public CVEvaluator cloneCVEvaluator()
+	public CVEvaluator cloneJob()
 	{
 		CVEvaluator cv = new CVEvaluator();
 		cv.setModels(models);
@@ -31,20 +40,9 @@ public class CVEvaluator extends DefaultJobOwner<String>
 	}
 
 	@Override
-	public String key()
+	public String getKey()
 	{
-		StringBuffer b = new StringBuffer();
-		b.append(numFolds);
-		b.append('#');
-		b.append(repetitions);
-		b.append('#');
-		b.append(dataSet == null ? null : dataSet.key());
-		for (Model m : models)
-		{
-			b.append('#');
-			b.append(m.key());
-		}
-		return b.toString();
+		return getKey(numFolds, repetitions, dataSet, models);
 	}
 
 	private List<CV> cvs;
@@ -58,18 +56,12 @@ public class CVEvaluator extends DefaultJobOwner<String>
 			{
 				for (Model mod : models)
 				{
-					//					for (FeatureProvider feat : (featureProviders != null ? featureProviders
-					//							: new FeatureProvider[] { null }))
-					//					{
 					CV cv = new CV();
-					cv.setModel(mod.cloneModel());
-					//						if (feat != null)
-					//							cv.setFeatureProvider(feat.cloneFeatureProvider());
+					cv.setModel((Model) mod.cloneJob());
 					cv.setDataSet(dataSet);
 					cv.setRandomSeed((long) r);
 					cv.setNumFolds(numFolds);
 					cvs.add(cv);
-					//					}
 				}
 			}
 		}
@@ -79,6 +71,9 @@ public class CVEvaluator extends DefaultJobOwner<String>
 	@Override
 	public Runnable nextJob() throws Exception
 	{
+		if (dataSet == null)
+			throw new NullPointerException("set dataset first");
+
 		boolean allDone = true;
 		for (final CV cv : getCVs())
 		{
@@ -91,22 +86,18 @@ public class CVEvaluator extends DefaultJobOwner<String>
 							run);
 			}
 		}
+
 		if (allDone)
-		{
-			if (!Blocker.block(key()))
-				return null;
-			return new Runnable()
+			return blockedJob("CVEval: storing results", new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					Printer.println("CVEval: storing results" + CVEvaluator.this.key());
 					store();
-					Blocker.unblock(CVEvaluator.this.key());
 				}
-			};
-		}
-		return null;
+			});
+		else
+			return null;
 	}
 
 	protected void store()
@@ -122,13 +113,8 @@ public class CVEvaluator extends DefaultJobOwner<String>
 				for (Predictions p : PredictionUtil.perFold(cv.getResult()))
 				{
 					int idx = rs.addResult();
-					rs.setResultValue(idx, "ModelKey", cv.getModel().key());
+					rs.setResultValue(idx, "ModelKey", cv.getModel().getKey());
 					rs.setResultValue(idx, "ModelName", cv.getModel().getName());
-					//					if (cv.getFeatureProvider() != null)
-					//					{
-					//						rs.setResultValue(idx, "FeatureKey", cv.getFeatureProvider().key());
-					//						rs.setResultValue(idx, "FeatureName", cv.getFeatureProvider().getName());
-					//					}
 					rs.setResultValue(idx, "CVSeed", cv.getRandomSeed());
 					rs.setResultValue(idx, "CVFold", p.fold[0]);
 					rs.setResultValue(idx, "AUC", PredictionUtil.AUC(p));
@@ -160,7 +146,7 @@ public class CVEvaluator extends DefaultJobOwner<String>
 		Model m = null;
 		for (CV cv : getCVs())
 		{
-			if (cv.getModel().key().equals(result))
+			if (cv.getModel().getKey().equals(result))
 			{
 				m = cv.getModel();
 				break;
@@ -169,6 +155,7 @@ public class CVEvaluator extends DefaultJobOwner<String>
 		return m;
 	}
 
+	@Override
 	public void setDataSet(DataSet dataSet)
 	{
 		this.dataSet = dataSet;
@@ -178,11 +165,6 @@ public class CVEvaluator extends DefaultJobOwner<String>
 	{
 		this.models = models;
 	}
-
-	//	public void setFeatureProviders(FeatureProvider... feats)
-	//	{
-	//		this.featureProviders = feats;
-	//	}
 
 	public void setNumFolds(int numFolds)
 	{
@@ -203,20 +185,8 @@ public class CVEvaluator extends DefaultJobOwner<String>
 		cv.setModels(new RandomForestModel(), new NaiveBayesModel());
 		cv.setNumFolds(10);
 		cv.setRepetitions(1);
-		if (!cv.isDone())
-		{
-			Runnable r = cv.nextJob();
-			while (r != null)
-			{
-				r.run();
-				if (!cv.isDone())
-					r = cv.nextJob();
-				else
-					r = null;
-			}
-		}
-		//		if (cv.isDone())
-		//			System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
+		cv.runSequentially();
+		System.out.println("done: " + cv.getBestModel());
 	}
 
 }

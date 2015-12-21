@@ -1,11 +1,11 @@
-package org.mg.wekalib.eval2;
+package org.mg.wekalib.eval2.model;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.RandomForest;
 
 public class RandomForestModel extends AbstractModel
 {
-	private static final long serialVersionUID = 1L;
+	//	private static final long serialVersionUID = 1L;
 
 	int numTrees = 100;
 
@@ -21,6 +21,23 @@ public class RandomForestModel extends AbstractModel
 	public String getParamKey()
 	{
 		return Integer.toString(numTrees);
+	}
+
+	@Override
+	public String getName()
+	{
+		return "RandomForest " + numTrees;
+	}
+
+	public void setNumTrees(int numTrees)
+	{
+		this.numTrees = numTrees;
+	}
+
+	@Override
+	protected void cloneParams(Model clonedModel)
+	{
+		((RandomForestModel) clonedModel).setNumTrees(numTrees);
 	}
 
 }
