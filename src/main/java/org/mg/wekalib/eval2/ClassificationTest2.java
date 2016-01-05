@@ -12,12 +12,14 @@ import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
 import org.mg.wekalib.eval2.model.Model;
-import org.mg.wekalib.eval2.model.RandomForestModel;
+import org.mg.wekalib.eval2.model.SupportVectorMachineModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
+import weka.classifiers.functions.supportVector.PolyKernel;
+import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.Instances;
 
 public class ClassificationTest2
@@ -109,38 +111,38 @@ public class ClassificationTest2
 		else
 		{
 			List<Model> classifiers = new ArrayList<>();
-			for (int numT : new int[] { 10, 100, 200 }) //10, 20, 40, 80, 
-			{
-				RandomForestModel rf = new RandomForestModel();
-				rf.setNumTrees(numT);
-				classifiers.add(rf);
-			}
+			//			for (int numT : new int[] { 10, 100, 200 }) //10, 20, 40, 80, 
+			//			{
+			//				RandomForestModel rf = new RandomForestModel();
+			//				rf.setNumTrees(numT);
+			//				classifiers.add(rf);
+			//			}
 
-			//			Double cs[] = new Double[] { 1.0, 10.0, 100.0 };
-			//			for (Double g : new Double[] { 0.001, 0.01, 0.1 })
-			//			{
-			//				for (Double c : cs)
-			//				{
-			//					if (c == 1.0 && g == 0.001) // does not work well
-			//						continue;
-			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
-			//					svm.setC(c);
-			//					svm.setKernel(new RBFKernel());
-			//					svm.setGamma(g);
-			//					classifiers.add(svm);
-			//				}
-			//			}
-			//			for (Double e : new Double[] { 1.0 }) // exponent optimizing not needed , 2.0, 3.0
-			//			{
-			//				for (Double c : cs)
-			//				{
-			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
-			//					svm.setC(c);
-			//					svm.setKernel(new PolyKernel());
-			//					svm.setExp(e);
-			//					classifiers.add(svm);
-			//				}
-			//			}
+			Double cs[] = new Double[] { 1.0, 10.0, 100.0 };
+			for (Double g : new Double[] { 0.001, 0.01, 0.1 })
+			{
+				for (Double c : cs)
+				{
+					if (c == 1.0 && g == 0.001) // does not work well
+						continue;
+					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+					svm.setC(c);
+					svm.setKernel(new RBFKernel());
+					svm.setGamma(g);
+					classifiers.add(svm);
+				}
+			}
+			for (Double e : new Double[] { 1.0 }) // exponent optimizing not needed , 2.0, 3.0
+			{
+				for (Double c : cs)
+				{
+					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+					svm.setC(c);
+					svm.setKernel(new PolyKernel());
+					svm.setExp(e);
+					classifiers.add(svm);
+				}
+			}
 
 			for (int i = 0; i < classifiers.size(); i++)
 			{

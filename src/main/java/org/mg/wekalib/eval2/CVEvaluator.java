@@ -1,5 +1,6 @@
 package org.mg.wekalib.eval2;
 
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +41,22 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 	}
 
 	@Override
-	public String getKey()
+	public String getName()
 	{
-		return getKey(numFolds, repetitions, dataSet, models);
+		return "CVEvaluator";
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return "CVEvaluator-numFolds" + numFolds + "-repetitions" + repetitions
+				+ (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
+	}
+
+	@Override
+	public String getKeyContent()
+	{
+		return getKeyContent(numFolds, repetitions, dataSet, models);
 	}
 
 	private List<CV> cvs;
@@ -82,8 +96,8 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 				allDone = false;
 				final Runnable run = cv.nextJob();
 				if (run != null)
-					return Printer.wrapRunnable("CVEval: cv " + ((getCVs().indexOf(cv)) + 1) + "/" + getCVs().size(),
-							run);
+					return Printer.wrapRunnable("CVEval: cv " + ((getCVs().indexOf(cv)) + 1) + "/"
+							+ getCVs().size(), run);
 			}
 		}
 
@@ -146,7 +160,7 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 		Model m = null;
 		for (CV cv : getCVs())
 		{
-			if (cv.getModel().getKey().equals(result))
+			if (cv.getModel().getKey().toString().equals(result))
 			{
 				m = cv.getModel();
 				break;
@@ -179,7 +193,8 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 	public static void main(String[] args) throws Exception
 	{
 		final CVEvaluator cv = new CVEvaluator();
-		Instances inst = new Instances(new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst = new Instances(new FileReader(
+				"/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		cv.setDataSet(new WekaInstancesDataSet(inst));
 		cv.setModels(new RandomForestModel(), new NaiveBayesModel());

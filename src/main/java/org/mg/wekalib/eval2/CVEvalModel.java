@@ -1,5 +1,6 @@
 package org.mg.wekalib.eval2;
 
+import java.io.File;
 import java.io.FileReader;
 
 import org.mg.wekalib.eval2.data.DataSet;
@@ -24,9 +25,9 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 	DataSet test;
 
 	@Override
-	public String getKey()
+	public String getKeyContent()
 	{
-		return getKey(cvEval, train, test);
+		return getKeyContent(cvEval, train, test);
 	}
 
 	@Override
@@ -36,22 +37,29 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		cv.setDataSet(train);
 		if (!cv.isDone())
 			return Printer.wrapRunnable("CVEvalModel: inner CV", cv.nextJob());
+		else
+		{
+			final Model best = (Model) cv.getBestModel().cloneJob();
+			best.setTrainingDataset(train);
+			best.setTestDataset(test);
+			if (!best.isDone())
+				return Printer.wrapRunnable("CVEvalModel: build model", best.nextJob());
+			else
+				return blockedJob("CVEvalModel: storing results", storeResults(best));
+		}
+	}
 
-		final Model best = (Model) cv.getBestModel().cloneJob();
-		best.setTrainingDataset(train);
-		best.setTestDataset(test);
-		if (!best.isDone())
-			return Printer.wrapRunnable("CVEvalModel: build model", best.nextJob());
-
-		return blockedJob("CVEvalModel: store model result", new Runnable()
+	private Runnable storeResults(final Model m)
+	{
+		return new Runnable()
 		{
 			public void run()
 			{
-				Predictions p = best.getResult();
+				Predictions p = m.getResult();
 				//System.err.println(PredictionUtil.summaryClassification(p));
 				setResult(p);
 			};
-		});
+		};
 	}
 
 	@Override
@@ -80,9 +88,21 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 	}
 
 	@Override
+	public DataSet getTrainingDataset()
+	{
+		return train;
+	}
+
+	@Override
 	public String getName()
 	{
 		return "CVEvalModel";
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return "CVEvalModel" + (train != null ? (File.separator + train.getKeyPrefix()) : "");
 	}
 
 	public static void main(String[] args) throws Exception
@@ -95,7 +115,8 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		CVEvalModel cvM = new CVEvalModel();
 		cvM.setCvEvaluator(cv);
 
-		Instances inst = new Instances(new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst = new Instances(new FileReader(
+				"/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		cvM.setTrainingDataset(new WekaInstancesDataSet(inst));
 		cvM.setTestDataset(new WekaInstancesDataSet(inst));

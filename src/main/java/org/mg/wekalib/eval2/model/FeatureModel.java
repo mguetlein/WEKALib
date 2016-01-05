@@ -1,5 +1,7 @@
 package org.mg.wekalib.eval2.model;
 
+import java.io.File;
+
 import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.eval2.job.FeatureProvider;
@@ -14,9 +16,28 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	DataSet test;
 
 	@Override
-	public String getKey()
+	public String getName()
 	{
-		return getKey(featureProvider, model, train, test);
+		return "FeatureModel (" + featureProvider.getName() + ", " + model.getName() + ")";
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return "FeatureModel"
+				+ File.separator
+				+ featureProvider.getKeyPrefix()
+				+ File.separator
+				+ model.getKeyPrefix()
+				+ ((train != null && featureProvider.getTrainingDataset() == null && model
+						.getTrainingDataset() == null) ? (File.separator + train.getKeyPrefix())
+						: "");
+	}
+
+	@Override
+	public String getKeyContent()
+	{
+		return getKeyContent(train, test, featureProvider, model);
 	}
 
 	@Override
@@ -26,24 +47,39 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 		feat.setTrainingDataset(train);
 		feat.setTestDataset(test);
 		if (!feat.isDone())
-			return Printer.wrapRunnable("FeatureModel: compute features", feat.nextJob());
+			return Printer.wrapRunnable("FeatureModel: compute features " + getName(),
+					feat.nextJob());
+		else
+		{
+			final Model mod = (Model) model.cloneJob();
+			DataSet res[] = feat.getResult();
+			mod.setTrainingDataset(res[0]);
+			mod.setTestDataset(res[1]);
+			if (!mod.isDone())
+			{
+				// to avoid having a lot of jobs that only store results, this jobs are concated
+				// does only work if model is a single job model
+				return Printer.wrapRunnable("FeatureModel: build model " + getName(),
+						mod.nextJob(), storeResults(mod));
+			}
+			else
+			{
+				// model is done, but results are missing (could happen if model has been invoked directly)
+				return storeResults(mod);
+			}
+		}
+	}
 
-		final Model mod = (Model) model.cloneJob();
-		DataSet res[] = feat.getResult();
-		mod.setTrainingDataset(res[0]);
-		mod.setTestDataset(res[1]);
-		if (!mod.isDone())
-			return Printer.wrapRunnable("FeatureModel: build model", mod.nextJob());
-
+	private Runnable storeResults(final Model m)
+	{
 		return blockedJob("FeatureModel: storing results", new Runnable()
 		{
-			@Override
 			public void run()
 			{
-				Predictions p = mod.getResult();
-				//				System.err.println(PredictionUtil.summaryClassification(p));
+				Predictions p = m.getResult();
+				//System.err.println(PredictionUtil.summaryClassification(p));
 				setResult(p);
-			}
+			};
 		});
 	}
 
@@ -75,15 +111,15 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	}
 
 	@Override
-	public void setTestDataset(DataSet test)
+	public DataSet getTrainingDataset()
 	{
-		this.test = test;
+		return train;
 	}
 
 	@Override
-	public String getName()
+	public void setTestDataset(DataSet test)
 	{
-		return "FeatureModel (" + featureProvider.getName() + ", " + model.getName() + ")";
+		this.test = test;
 	}
 
 }

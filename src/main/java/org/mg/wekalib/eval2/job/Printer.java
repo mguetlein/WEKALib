@@ -3,28 +3,39 @@ package org.mg.wekalib.eval2.job;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.mg.wekalib.eval2.persistance.DB;
 
 public class Printer
 {
+	public static boolean PRINT_TO_SYSTEM_OUT = false;
+
 	private static int indent = 0;
 
 	private static ThreadLocal<PrintStream> out = new ThreadLocal<>();
 
 	private static PrintStream out()
 	{
-		//return System.out;
-		if (out.get() == null)
+		if (PRINT_TO_SYSTEM_OUT)
+			return System.out;
+		else
 		{
-			try
+			if (out.get() == null)
 			{
-				out.set(new PrintStream(new File("jobs/out/" + Blocker.getThreadID())));
+				try
+				{
+					System.err.println("output goes to " + "jobs/out/" + DB.getThreadID());
+					out.set(new PrintStream(new File("jobs/out/" + DB.getThreadID())));
+				}
+				catch (FileNotFoundException e)
+				{
+					throw new RuntimeException(e);
+				}
 			}
-			catch (FileNotFoundException e)
-			{
-				throw new RuntimeException(e);
-			}
+			return out.get();
 		}
-		return out.get();
 	}
 
 	public static void increaseIndent()
@@ -37,8 +48,11 @@ public class Printer
 		indent -= 2;
 	}
 
+	static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
+
 	private static void printIndent()
 	{
+		out().print(format.format(new Date()));
 		for (int i = 0; i < indent; i++)
 			out().print(' ');
 	}
@@ -55,7 +69,20 @@ public class Printer
 		out().println(o);
 	}
 
-	public static Runnable wrapRunnable(final String msg, final Runnable r)
+	public static void println(Throwable t)
+	{
+		printIndent();
+		out().println("ERROR");
+		out().println(t.getMessage());
+		t.printStackTrace(out());
+	}
+
+	public static Runnable wrapRunnable(String msg, Runnable r)
+	{
+		return wrapRunnable(msg, r, null);
+	}
+
+	public static Runnable wrapRunnable(final String msg, final Runnable r, final Runnable r2)
 	{
 		if (r == null)
 			return null;
@@ -69,6 +96,8 @@ public class Printer
 				try
 				{
 					r.run();
+					if (r2 != null)
+						r2.run();
 				}
 				finally
 				{

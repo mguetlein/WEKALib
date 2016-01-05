@@ -28,16 +28,10 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 		return inst.relationName();
 	}
 
-	//	@Override
-	//	public DataSet cloneDataset()
-	//	{
-	//		return new WekaInstancesDataSet(inst);
-	//	}
-
 	@Override
-	public String getKey()
+	public String getKeyContent()
 	{
-		return getKey(key);
+		return getKeyContent(key);
 	}
 
 	@Override

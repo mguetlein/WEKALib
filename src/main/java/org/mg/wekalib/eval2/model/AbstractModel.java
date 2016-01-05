@@ -1,5 +1,7 @@
 package org.mg.wekalib.eval2.model;
 
+import java.io.File;
+
 import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
@@ -34,9 +36,22 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	}
 
 	@Override
-	public String getKey()
+	public String getName()
 	{
-		return getKey(getWekaClassifer().getClass().getSimpleName(), getParamKey(), train, test);
+		return getWekaClassifer().getClass().getSimpleName();
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return getWekaClassifer().getClass().getSimpleName()
+				+ (train != null ? (File.separator + train.getName()) : "");
+	}
+
+	@Override
+	public String getKeyContent()
+	{
+		return getKeyContent(getParamKey(), train, test);
 	}
 
 	@Override
@@ -80,11 +95,6 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 		}
 	}
 
-	public String getName()
-	{
-		return getWekaClassifer().getClass().getSimpleName();
-	}
-
 	public abstract Classifier getWekaClassifer();
 
 	protected abstract String getParamKey();
@@ -101,6 +111,12 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	public void setTestDataset(DataSet test)
 	{
 		this.test = test;
+	}
+
+	@Override
+	public DataSet getTrainingDataset()
+	{
+		return train;
 	}
 
 }

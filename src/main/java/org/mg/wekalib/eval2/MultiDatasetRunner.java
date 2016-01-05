@@ -3,6 +3,8 @@ package org.mg.wekalib.eval2;
 import java.io.FileReader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.wekalib.eval2.data.DataSet;
@@ -42,9 +44,33 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 	}
 
 	@Override
-	public String getKey()
+	public String getName()
 	{
-		return getKey(job, dataSets);
+		return "MultiDatasetRunner";
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return "MultiDatasetRunner";
+	}
+
+	@Override
+	public String getKeyContent()
+	{
+		return getKeyContent(job, dataSets);
+	}
+
+	public List<DataSetJobOwner<R>> jobs()
+	{
+		List<DataSetJobOwner<R>> l = new ArrayList<DataSetJobOwner<R>>();
+		for (DataSet dataSet : dataSets)
+		{
+			DataSetJobOwner<R> job = (DataSetJobOwner<R>) MultiDatasetRunner.this.job.cloneJob();
+			job.setDataSet(dataSet);
+			l.add(job);
+		}
+		return l;
 	}
 
 	@Override
@@ -60,15 +86,13 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 				allDone = false;
 				Runnable r = job.nextJob();
 				if (r != null)
-				{
-					return Printer.wrapRunnable("MultiDataset: run " + (ArrayUtil.indexOf(dataSets, d) + 1) + "/"
-							+ dataSets.length + " with dataset " + d.getName(), r);
-				}
+					return Printer.wrapRunnable(
+							"MultiDataset: run " + (ArrayUtil.indexOf(dataSets, d) + 1) + "/"
+									+ dataSets.length + " with dataset " + d.getName(), r);
 			}
 		}
 
 		if (allDone)
-		{
 			return blockedJob("MultiDataset: storing results", new Runnable()
 			{
 				@Override
@@ -77,7 +101,6 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 					store();
 				}
 			});
-		}
 		else
 			return null;
 	}
@@ -101,8 +124,10 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 
 	public static void main(String[] args) throws Exception
 	{
-		Instances inst = new Instances(new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
-		Instances inst2 = new Instances(new FileReader("/home/martin/data/weka/nominal/credit-a.arff"));
+		Instances inst = new Instances(new FileReader(
+				"/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst2 = new Instances(new FileReader(
+				"/home/martin/data/weka/nominal/credit-a.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst2.setClassIndex(inst2.numAttributes() - 1);
 		MultiDatasetRunner<Predictions> run = new MultiDatasetRunner<>();

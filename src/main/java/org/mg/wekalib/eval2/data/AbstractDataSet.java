@@ -1,8 +1,8 @@
 package org.mg.wekalib.eval2.data;
 
-import org.mg.wekalib.eval2.job.DefaultJobOwner;
+import org.mg.wekalib.eval2.job.DefaultComposedKeyProvider;
 
-public abstract class AbstractDataSet implements DataSet
+public abstract class AbstractDataSet extends DefaultComposedKeyProvider implements DataSet
 {
 	@Override
 	public DataSet getTrainFold(int numFolds, long randomSeed, int fold)
@@ -16,13 +16,14 @@ public abstract class AbstractDataSet implements DataSet
 		return new FoldDataSet(this, numFolds, randomSeed, fold, false);
 	}
 
-	public String getKey(Object... object)
+	@Override
+	public String toString()
 	{
-		return DefaultJobOwner.getKey(this.getClass(), object);
+		return getName();
 	}
 
 	@Override
-	public String toString()
+	public String getKeyPrefix()
 	{
 		return getName();
 	}

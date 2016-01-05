@@ -2,78 +2,74 @@ package org.mg.wekalib.eval2.job;
 
 import java.io.Serializable;
 
-import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.ThreadUtil;
+import org.mg.wekalib.eval2.persistance.DB;
 
-public abstract class DefaultJobOwner<R extends Serializable> implements JobOwner<R>
+public abstract class DefaultJobOwner<R extends Serializable> extends DefaultComposedKeyProvider
+		implements JobOwner<R>
 {
-	private static Blocker BLOCKER = new Blocker();
-	private static ResultProvider RESULTS = new ResultProvider();
-
 	@Override
 	public boolean isDone()
 	{
-		return RESULTS.contains(getKey());
+		return DB.getResultProvider().contains(getKey());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public R getResult()
 	{
-		return (R) RESULTS.get(getKey());
+		return (R) DB.getResultProvider().get(getKey());
 	}
 
 	protected void setResult(R r)
 	{
-		RESULTS.set(getKey(), r);
-	}
-
-	public static String getKey(Class<?> clazz, Object[] elements)
-	{
-		StringBuffer b = new StringBuffer();
-		b.append(clazz.getSimpleName());
-		for (Object o : ArrayUtil.flatten(elements))
-		{
-			b.append('#');
-			if (o == null)
-				b.append("null");
-			else if (o instanceof KeyProvider)
-				b.append(((KeyProvider) o).getKey());
-			else if (o instanceof Enum<?> || o instanceof String || o instanceof Integer || o instanceof Double
-					|| o instanceof Long || o instanceof Boolean)
-				b.append(o.toString());
-			else
-				throw new IllegalArgumentException("Not a key provider: " + o + " " + o.getClass());
-		}
-		return b.toString();
-	}
-
-	protected String getKey(Object... elements)
-	{
-		return getKey(this.getClass(), elements);
+		if (!DB.getBlocker().isBlockedByThread(getKey(), DB.getThreadID()))
+			throw new IllegalStateException("job not blocked by this thread");
+		if (isDone())
+			throw new IllegalStateException("job already done");
+		DB.getResultProvider().set(getKey(), r);
 	}
 
 	protected Runnable blockedJob(final String msg, final Runnable r)
 	{
 		final String key = getKey();
-		if (!BLOCKER.block(key))
+		if (!DB.getBlocker().block(key, DB.getThreadID()))
 			return null;
-		return new Runnable()
+		// it can happen that a job getsFinished right before/while blocking
+		if (isDone())
 		{
-			@Override
-			public void run()
+			DB.getBlocker().unblock(key);
+			return null;
+		}
+		else
+			return new Runnable()
 			{
-				try
+				@Override
+				public void run()
 				{
-					Printer.println(msg + " (" + key + ")");
-					r.run();
+					try
+					{
+						if (isDone())
+							throw new IllegalStateException("job already done.");
+						Printer.println(msg + " (" + key + ")");
+						r.run();
+						if (!isDone())
+							throw new IllegalStateException("job not done.");
+					}
+					catch (Exception e)
+					{
+						Printer.println(e);
+						throw e;
+					}
+					finally
+					{
+						// wait after done and before unblocking to avoid
+						// simultaneous unblocking by this thread and blocking by other thread
+						ThreadUtil.sleep(333);
+						DB.getBlocker().unblock(key);
+					}
 				}
-				finally
-				{
-					BLOCKER.unblock(key);
-				}
-			}
-		};
+			};
 	}
 
 	@Override
@@ -83,11 +79,13 @@ public abstract class DefaultJobOwner<R extends Serializable> implements JobOwne
 		{
 			Runnable r = nextJob();
 			if (r != null)
+			{
 				r.run();
+			}
 			else
 			{
 				ThreadUtil.sleep(1000);
-				System.out.println("wait until done");
+				Printer.println("wait until done");
 			}
 		}
 		return getResult();
@@ -118,7 +116,7 @@ public abstract class DefaultJobOwner<R extends Serializable> implements JobOwne
 		while (!isDone())
 		{
 			ThreadUtil.sleep(1000);
-			System.out.println("wait until done");
+			Printer.println("wait until done");
 		}
 		return getResult();
 	}

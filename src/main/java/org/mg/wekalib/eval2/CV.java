@@ -1,5 +1,6 @@
 package org.mg.wekalib.eval2;
 
+import java.io.File;
 import java.io.FileReader;
 
 import org.mg.wekalib.eval2.data.DataSet;
@@ -40,9 +41,23 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	}
 
 	@Override
-	public String getKey()
+	public String getName()
 	{
-		return getKey(dataSet, model, numFolds, randomSeed);
+		return "CV: numFolds " + numFolds + ", seed " + randomSeed;
+	}
+
+	@Override
+	public String getKeyPrefix()
+	{
+		return "CV-numFolds" + numFolds + "-seed" + randomSeed + File.separator
+				+ model.getKeyPrefix()
+				+ (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
+	}
+
+	@Override
+	public String getKeyContent()
+	{
+		return getKeyContent(dataSet, model, numFolds, randomSeed);
 	}
 
 	@Override
@@ -61,12 +76,12 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 				allDone = false;
 				Runnable r = m.nextJob();
 				if (r != null)
-					return Printer.wrapRunnable("CV: fold " + (f + 1) + "/" + numFolds + ", seed " + randomSeed, r);
+					return Printer.wrapRunnable("CV: fold " + (f + 1) + "/" + numFolds + ", seed "
+							+ randomSeed, r);
 			}
 		}
 
 		if (allDone)
-		{
 			return blockedJob("CV: storing results", new Runnable()
 			{
 				@Override
@@ -75,8 +90,8 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 					store();
 				}
 			});
-		}
-		return null;
+		else
+			return null;
 	}
 
 	private void store()
@@ -127,7 +142,8 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	public static void main(String[] args) throws Exception
 	{
 		CV cv = new CV();
-		Instances inst = new Instances(new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst = new Instances(new FileReader(
+				"/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		cv.setDataSet(new WekaInstancesDataSet(inst));
 		cv.setModel(new RandomForestModel());

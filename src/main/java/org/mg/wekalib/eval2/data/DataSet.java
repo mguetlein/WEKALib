@@ -2,11 +2,12 @@ package org.mg.wekalib.eval2.data;
 
 import java.util.List;
 
+import org.mg.wekalib.eval2.job.ComposedKeyProvider;
 import org.mg.wekalib.eval2.job.KeyProvider;
 
 import weka.core.Instances;
 
-public interface DataSet extends KeyProvider
+public interface DataSet extends KeyProvider, ComposedKeyProvider
 {
 	public DataSet getTrainFold(int numFolds, long randomSeed, int fold);
 

@@ -2,8 +2,10 @@ package org.mg.wekalib.eval2.job;
 
 import java.io.Serializable;
 
-public interface JobOwner<R extends Serializable> extends KeyProvider
+public interface JobOwner<R extends Serializable> extends KeyProvider, ComposedKeyProvider
 {
+	public String getName();
+
 	public boolean isDone();
 
 	public R getResult();

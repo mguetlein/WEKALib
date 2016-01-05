@@ -9,6 +9,4 @@ public interface FeatureProvider extends JobOwner<DataSet[]>
 	public void setTestDataset(DataSet test);
 
 	public DataSet getTrainingDataset();
-
-	public String getName();
 }

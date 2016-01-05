@@ -14,7 +14,7 @@ public interface Model extends JobOwner<Predictions> //, Serializable
 
 	public String getName();
 
-	//	public DataSet getTrainingDataset();
+	public DataSet getTrainingDataset();
 
 	//	public FeatureProvider getFeatureProvider();
 }

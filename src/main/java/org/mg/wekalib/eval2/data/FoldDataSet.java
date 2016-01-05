@@ -29,16 +29,10 @@ public class FoldDataSet extends AbstractDataSet
 		this.train = train;
 	}
 
-	//	@Override
-	//	public DataSet cloneDataset()
-	//	{
-	//		return new FoldDataSet(parent, numFolds, randomSeed, fold, train);
-	//	}
-
 	@Override
-	public String getKey()
+	public String getKeyContent()
 	{
-		return getKey(parent, numFolds, randomSeed, fold, train);
+		return getKeyContent(parent, numFolds, randomSeed, fold, train);
 	}
 
 	public int getFold()
@@ -62,8 +56,8 @@ public class FoldDataSet extends AbstractDataSet
 	{
 		if (self == null)
 		{
-			Printer.println("FoldDataset: creating " + (train ? "train" : "test") + " fold " + (fold + 1) + "/"
-					+ numFolds + ", seed " + randomSeed);
+			Printer.println("FoldDataset: creating " + (train ? "train" : "test") + " fold "
+					+ (fold + 1) + "/" + numFolds + ", seed " + randomSeed);
 			Integer[] idx = ArrayUtil.toIntegerArray(ArrayUtil.indexArray(parent.getSize()));
 			ArrayUtil.scramble(idx, new Random(randomSeed));
 			List<Integer[]> cvIdx = ArrayUtil.split(idx, numFolds);
@@ -78,7 +72,9 @@ public class FoldDataSet extends AbstractDataSet
 
 	public String getName()
 	{
-		return (train ? "Train" : "Test") + " fold " + (fold + 1) + " of " + parent.getName();
+		// name is used as key prefix, keep it simple		
+		//		return parent.getName() + "/" + (train ? "Train" : "Test") + "-fold-" + (fold + 1) + "-of-" + numFolds;
+		return parent.getName();
 	}
 
 	@Override
