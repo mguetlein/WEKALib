@@ -12,6 +12,7 @@ public class SupportVectorMachineModel extends AbstractModel
 	private double c = 1.0;
 	private double gamma = 0.01;
 	private double exp = 1;
+	private boolean buildLogisticModels = true;
 
 	@Override
 	public Classifier getWekaClassifer()
@@ -20,6 +21,7 @@ public class SupportVectorMachineModel extends AbstractModel
 		{
 			SMO smo = new SMO();
 			smo.setC(c);
+			smo.setBuildLogisticModels(buildLogisticModels);
 			Kernel kernel = this.kernel.getClass().newInstance();
 			if (kernel instanceof PolyKernel)
 				((PolyKernel) kernel).setExponent(exp);
@@ -38,7 +40,7 @@ public class SupportVectorMachineModel extends AbstractModel
 	public String getName()
 	{
 		StringBuffer b = new StringBuffer();
-		b.append("SMV c" + c + " ");
+		b.append("SMV c" + c + " l" + buildLogisticModels + " ");
 		if (kernel instanceof PolyKernel)
 			b.append("poly e" + exp);
 		else if (kernel instanceof RBFKernel)
@@ -67,11 +69,17 @@ public class SupportVectorMachineModel extends AbstractModel
 		this.kernel = kernel;
 	}
 
+	public void setBuildLogisticModels(boolean buildLogisticModels)
+	{
+		this.buildLogisticModels = buildLogisticModels;
+	}
+
 	@Override
 	protected void cloneParams(Model clonedModel)
 	{
 		SupportVectorMachineModel m = (SupportVectorMachineModel) clonedModel;
 		m.setC(c);
+		m.setBuildLogisticModels(buildLogisticModels);
 		m.setGamma(gamma);
 		m.setExp(exp);
 		m.setKernel(kernel);
@@ -88,6 +96,8 @@ public class SupportVectorMachineModel extends AbstractModel
 		b.append(gamma);
 		b.append('#');
 		b.append(exp);
+		b.append('#');
+		b.append(buildLogisticModels);
 		return b.toString();
 	}
 

@@ -13,23 +13,26 @@ import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
 import org.mg.wekalib.eval2.model.Model;
 import org.mg.wekalib.eval2.model.SupportVectorMachineModel;
+import org.mg.wekalib.eval2.persistance.DB;
+import org.mg.wekalib.eval2.persistance.ResultProviderImpl;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
-import weka.classifiers.functions.supportVector.PolyKernel;
-import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.Instances;
 
 public class ClassificationTest2
 {
 	public static void main(String[] args) throws Exception
 	{
-		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos", "breast-cancer", "breast-w",
-				"colic", "colic.ORIG", "credit-a", "credit-g", "diabetes", "glass", "heart-c", "heart-h",
-				"heart-statlog", "hypothyroid", "ionosphere", "lymph", "primary-tumor", "segment", "sonar", "soybean",
-				"vehicle", "vote", "vowel", "zoo" };
+		DB.setResultProvider(new ResultProviderImpl());
+
+		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos",
+				"breast-cancer", "breast-w", "colic", "colic.ORIG", "credit-a", "credit-g",
+				"diabetes", "glass", "heart-c", "heart-h", "heart-statlog", "hypothyroid",
+				"ionosphere", "lymph", "primary-tumor", "segment", "sonar", "soybean", "vehicle",
+				"vote", "vowel", "zoo" };
 		//too-big: "letter", "kr-vs-kp", "splice", waveform-5000, "sick"
 		//too-easy: "mushroom"
 		//too-unstable: "hepatitis", "labor"
@@ -43,8 +46,9 @@ public class ClassificationTest2
 			{
 				while (true)
 				{
-					String measure = "AUPRC";
-					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset", measure);
+					String measure = "AUC";
+					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm",
+							"Dataset", measure);
 					bp.setHideMean(true);
 					SwingUtil.showInFrame(bp.getChart(), measure, false, new Dimension(1200, 800));
 					SwingUtil.waitWhileWindowsVisible();
@@ -83,7 +87,8 @@ public class ClassificationTest2
 	{
 		if (c instanceof SingleClassifierEnhancer)
 		{
-			return c.getClass().getSimpleName() + "-" + getName(((SingleClassifierEnhancer) c).getClassifier());
+			return c.getClass().getSimpleName() + "-"
+					+ getName(((SingleClassifierEnhancer) c).getClassifier());
 		}
 		else
 			return c.getClass().getSimpleName();
@@ -91,12 +96,13 @@ public class ClassificationTest2
 
 	public static boolean run(String data, int seed) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/nominal/" + data
-				+ ".arff"));
+		Instances inst = new Instances(new FileReader(System.getProperty("user.home")
+				+ "/data/weka/nominal/" + data + ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
 		WekaInstancesDataSet ds = new WekaInstancesDataSet(inst);
-		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
+		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:"
+				+ inst.numAttributes());
 
 		if (inst.numInstances() < 30)
 		{
@@ -118,31 +124,55 @@ public class ClassificationTest2
 			//				classifiers.add(rf);
 			//			}
 
-			Double cs[] = new Double[] { 1.0, 10.0, 100.0 };
-			for (Double g : new Double[] { 0.001, 0.01, 0.1 })
+			//			classifiers.add(new RandomForestModel());
+
 			{
-				for (Double c : cs)
-				{
-					if (c == 1.0 && g == 0.001) // does not work well
-						continue;
-					SupportVectorMachineModel svm = new SupportVectorMachineModel();
-					svm.setC(c);
-					svm.setKernel(new RBFKernel());
-					svm.setGamma(g);
-					classifiers.add(svm);
-				}
+				SupportVectorMachineModel svm = new SupportVectorMachineModel();
+				svm.setBuildLogisticModels(false);
+				classifiers.add(svm);
+
+				SupportVectorMachineModel svm2 = new SupportVectorMachineModel();
+				svm2.setBuildLogisticModels(true);
+				classifiers.add(svm2);
 			}
-			for (Double e : new Double[] { 1.0 }) // exponent optimizing not needed , 2.0, 3.0
-			{
-				for (Double c : cs)
-				{
-					SupportVectorMachineModel svm = new SupportVectorMachineModel();
-					svm.setC(c);
-					svm.setKernel(new PolyKernel());
-					svm.setExp(e);
-					classifiers.add(svm);
-				}
-			}
+
+			//			{
+			//				SupportVectorMachineModel svm = new SupportVectorMachineModel();
+			//				svm.setBuildLogisticModels(false);
+			//				svm.setKernel(new RBFKernel());
+			//				classifiers.add(svm);
+			//
+			//				SupportVectorMachineModel svm2 = new SupportVectorMachineModel();
+			//				svm2.setKernel(new RBFKernel());
+			//				svm2.setBuildLogisticModels(true);
+			//				classifiers.add(svm2);
+			//			}
+
+			//			Double cs[] = new Double[] { 1.0, 10.0, 100.0 };
+			//			for (Double g : new Double[] { 0.001, 0.01, 0.1 })
+			//			{
+			//				for (Double c : cs)
+			//				{
+			//					if (c == 1.0 && g == 0.001) // does not work well
+			//						continue;
+			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+			//					svm.setC(c);
+			//					svm.setKernel(new RBFKernel());
+			//					svm.setGamma(g);
+			//					classifiers.add(svm);
+			//				}
+			//			}
+			//			for (Double e : new Double[] { 1.0 }) // exponent optimizing not needed , 2.0, 3.0
+			//			{
+			//				for (Double c : cs)
+			//				{
+			//					SupportVectorMachineModel svm = new SupportVectorMachineModel();
+			//					svm.setC(c);
+			//					svm.setKernel(new PolyKernel());
+			//					svm.setExp(e);
+			//					classifiers.add(svm);
+			//				}
+			//			}
 
 			for (int i = 0; i < classifiers.size(); i++)
 			{
