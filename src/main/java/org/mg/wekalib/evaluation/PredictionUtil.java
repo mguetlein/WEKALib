@@ -59,7 +59,8 @@ public class PredictionUtil
 		return p;
 	}
 
-	public static Predictions add(Predictions pred, int fold, double[] act, double[] prd, double conf[], int oIdx[])
+	public static Predictions add(Predictions pred, int fold, double[] act, double[] prd,
+			double conf[], int oIdx[])
 	{
 		Predictions p = new Predictions();
 
@@ -93,7 +94,8 @@ public class PredictionUtil
 				source.fold[sourceIdx], source.origIndex[sourceIdx]);
 	}
 
-	public static void add(Predictions p, double actual, double predicted, double confidence, int fold, int origIdx)
+	public static void add(Predictions p, double actual, double predicted, double confidence,
+			int fold, int origIdx)
 	{
 		if (p.actual == null)
 		{
@@ -200,7 +202,8 @@ public class PredictionUtil
 		return m;
 	}
 
-	public static List<Predictions> perDrugCombi(Predictions pred, List<String> drugCombination, double percentage)
+	public static List<Predictions> perDrugCombi(Predictions pred, List<String> drugCombination,
+			double percentage)
 	{
 		List<Predictions> split = new ArrayList<>(split(pred, drugCombination).values());
 
@@ -377,7 +380,8 @@ public class PredictionUtil
 		return (numerator / denumerator);
 	}
 
-	private static HashMap<String, Double> getActualMedianForInfo(Predictions pred, List<String> info)
+	private static HashMap<String, Double> getActualMedianForInfo(Predictions pred,
+			List<String> info)
 	{
 		HashMap<String, Double> res = new LinkedHashMap<>();
 		HashMap<String, Predictions> split = split(pred, info);
@@ -386,7 +390,8 @@ public class PredictionUtil
 		return res;
 	}
 
-	public static double globalPearson(Predictions pred, List<String> drugCombination, List<String> cellLine)
+	public static double globalPearson(Predictions pred, List<String> drugCombination,
+			List<String> cellLine)
 	{
 		HashMap<String, Double> medianForDrugC = getActualMedianForInfo(pred, drugCombination);
 		HashMap<String, Double> medianForCellL = getActualMedianForInfo(pred, cellLine);
@@ -404,7 +409,8 @@ public class PredictionUtil
 		for (int i = 0; i < predDrugC.actual.length; i++)
 			z1[i] = medianForDrugC.get(predDrugC.info[i]);
 
-		double numerator = partialCorrelation(x, y, z1) - partialCorrelation(x, z0, z1) * partialCorrelation(z0, y, z1);
+		double numerator = partialCorrelation(x, y, z1)
+				- partialCorrelation(x, z0, z1) * partialCorrelation(z0, y, z1);
 		double denumerator = FastMath.sqrt(1 - Math.pow(partialCorrelation(x, z0, z1), 2))
 				* FastMath.sqrt(1 - Math.pow(partialCorrelation(z0, y, z1), 2));
 
@@ -416,7 +422,8 @@ public class PredictionUtil
 		return pearsonPerDrugCombi(preds, drugCombination, 1.0);
 	}
 
-	public static double pearsonPerDrugCombi(Predictions preds, List<String> drugCombination, double percentage)
+	public static double pearsonPerDrugCombi(Predictions preds, List<String> drugCombination,
+			double percentage)
 	{
 		//List<String> uniqDrugs = new ArrayList<>(new LinkedHashSet<String>(drugCombination));
 
@@ -453,7 +460,8 @@ public class PredictionUtil
 		return pSum / (double) pCount;
 	}
 
-	public static double[] pearsonPerFoldAndDrugCombi(Predictions preds, List<String> drugCombination, double percentage)
+	public static double[] pearsonPerFoldAndDrugCombi(Predictions preds,
+			List<String> drugCombination, double percentage)
 	{
 		List<Predictions> pPerFold = perFold(preds);
 		double[] d = new double[pPerFold.size()];
@@ -652,6 +660,98 @@ public class PredictionUtil
 		return correct / (double) p.predicted.length;
 	}
 
+	public static double recall(Predictions p)
+	{
+		return sensitivity(p);
+	}
+
+	public static double truePositiveRate(Predictions p)
+	{
+		return sensitivity(p);
+	}
+
+	public static double sensitivity(Predictions p)
+	{
+		double correct = 0, total = 0;
+		for (int j = 0; j < p.actual.length; j++)
+		{
+			if (p.actual[j] == 1.0)
+			{
+				if (p.predicted[j] == p.actual[j])
+					correct++;
+				total++;
+			}
+		}
+		if (total == 0)
+			return 0;
+		return correct / total;
+	}
+
+	public static double trueNegativeRate(Predictions p)
+	{
+		return specificity(p);
+	}
+
+	public static double specificity(Predictions p)
+	{
+		double correct = 0, total = 0;
+		for (int j = 0; j < p.actual.length; j++)
+		{
+			if (p.actual[j] == 0.0)
+			{
+				if (p.predicted[j] == p.actual[j])
+					correct++;
+				total++;
+			}
+		}
+		if (total == 0)
+			return 0;
+		return correct / total;
+	}
+
+	public enum ClassificationMeasure
+	{
+		accuracy, AUC, AUPRC, sensitivity, specificity;
+
+		public String shortName()
+		{
+			switch (this)
+			{
+				case AUC:
+					return "AUC";
+				case AUPRC:
+					return "AUPRC";
+				case accuracy:
+					return "Accur";
+				case sensitivity:
+					return "Sensi";
+				case specificity:
+					return "Speci";
+				default:
+					throw new IllegalArgumentException();
+			}
+		}
+	}
+
+	public static double getClassificationMeasure(Predictions p, ClassificationMeasure m)
+	{
+		switch (m)
+		{
+			case AUC:
+				return AUC(p);
+			case AUPRC:
+				return AUPRC(p);
+			case accuracy:
+				return accuracy(p);
+			case sensitivity:
+				return sensitivity(p);
+			case specificity:
+				return specificity(p);
+			default:
+				throw new IllegalArgumentException();
+		}
+	}
+
 	public static Predictions topConf(Predictions pred, double d)
 	{
 		int size = (int) (pred.predicted.length * d);
@@ -692,16 +792,16 @@ public class PredictionUtil
 		return p2;
 	}
 
-	public static String summaryClassification(Predictions pf)
+	public static String summaryClassification(Predictions p)
 	{
 		StringBuffer bf = new StringBuffer();
-		bf.append(pf.actual.length + " predictions\n");
-		bf.append("fold: " + CountedSet.create(ArrayUtil.toIntegerArray(pf.fold)) + "\n");
-		bf.append("actual: " + CountedSet.create(ArrayUtil.toDoubleArray(pf.actual)) + "\n");
-		bf.append("predicted: " + CountedSet.create(ArrayUtil.toDoubleArray(pf.predicted)) + "\n");
-		bf.append("confidence: " + DoubleArraySummary.create(pf.confidence) + "\n");
-		bf.append("accuracy: " + accuracy(pf) + "\n");
-		bf.append("auc: " + AUC(pf) + "\n");
+		bf.append(p.actual.length + " predictions\n");
+		bf.append("fold: " + CountedSet.create(ArrayUtil.toIntegerArray(p.fold)) + "\n");
+		bf.append("actual: " + CountedSet.create(ArrayUtil.toDoubleArray(p.actual)) + "\n");
+		bf.append("predicted: " + CountedSet.create(ArrayUtil.toDoubleArray(p.predicted)) + "\n");
+		bf.append("confidence: " + DoubleArraySummary.create(p.confidence) + "\n");
+		bf.append("accuracy: " + accuracy(p) + "\n");
+		bf.append("auc: " + AUC(p) + "\n");
 		return bf.toString();
 	}
 

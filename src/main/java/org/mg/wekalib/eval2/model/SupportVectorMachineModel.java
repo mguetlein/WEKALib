@@ -101,4 +101,30 @@ public class SupportVectorMachineModel extends AbstractModel
 		return b.toString();
 	}
 
+	@Override
+	public String getAlgorithmShortName()
+	{
+		return "SMV";
+	}
+
+	@Override
+	public String getAlgorithmParamsNice()
+	{
+		if (c % 1.0 != 0.0)
+			throw new IllegalStateException("c with non int values " + c);
+		if (exp % 1.0 != 0.0)
+			throw new IllegalStateException("exp with non int values" + exp);
+		String s = "C:" + (int) c + " ";
+		if (kernel instanceof PolyKernel)
+		{
+			if (exp == 1)
+				s += "Linear";
+			else
+				s += "Poly Exp:" + (int) exp;
+		}
+		else
+			s += "RBF Gamma:" + gamma;
+		return s;
+	}
+
 }

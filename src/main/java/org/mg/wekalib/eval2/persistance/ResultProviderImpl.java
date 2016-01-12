@@ -8,7 +8,7 @@ import org.mg.javalib.util.ThreadUtil;
 public class ResultProviderImpl implements ResultProvider
 {
 	KeyValueFileStore<String, Serializable> keyValueStore = new KeyValueFileStore<>("jobs/store",
-			false, true);
+			false, true, "jobs/tmp", true);
 
 	@Override
 	public boolean contains(String key)

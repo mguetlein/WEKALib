@@ -16,5 +16,9 @@ public interface Model extends JobOwner<Predictions> //, Serializable
 
 	public DataSet getTrainingDataset();
 
+	public String getAlgorithmShortName();
+
+	public String getAlgorithmParamsNice();
+
 	//	public FeatureProvider getFeatureProvider();
 }

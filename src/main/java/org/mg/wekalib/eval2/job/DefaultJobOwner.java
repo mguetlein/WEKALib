@@ -53,6 +53,9 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 							throw new IllegalStateException("job already done.");
 						Printer.println(msg + " (" + key + ")");
 						r.run();
+						// wait after done and before unblocking to avoid
+						// simultaneous unblocking by this thread and blocking by other thread
+						ThreadUtil.sleep(1000);
 						if (!isDone())
 							throw new IllegalStateException("job not done.");
 					}
@@ -63,9 +66,6 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 					}
 					finally
 					{
-						// wait after done and before unblocking to avoid
-						// simultaneous unblocking by this thread and blocking by other thread
-						ThreadUtil.sleep(333);
 						DB.getBlocker().unblock(key);
 					}
 				}
@@ -84,10 +84,11 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 			}
 			else
 			{
-				ThreadUtil.sleep(1000);
+				ThreadUtil.sleep(10000);
 				Printer.println("wait until done");
 			}
 		}
+		Printer.println("done! " + getKey());
 		return getResult();
 	}
 
@@ -115,9 +116,10 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 		}
 		while (!isDone())
 		{
-			ThreadUtil.sleep(1000);
+			ThreadUtil.sleep(10000);
 			Printer.println("wait until done");
 		}
+		Printer.println("done! " + getKey());
 		return getResult();
 	}
 }

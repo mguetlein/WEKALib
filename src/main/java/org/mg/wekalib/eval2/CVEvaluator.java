@@ -29,6 +29,7 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 	Model models[];
 	int numFolds = 10;
 	int repetitions = 3;
+	PredictionUtil.ClassificationMeasure measure = PredictionUtil.ClassificationMeasure.AUPRC;
 
 	public CVEvaluator cloneJob()
 	{
@@ -37,6 +38,7 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 		cv.setDataSet(dataSet);
 		cv.setNumFolds(numFolds);
 		cv.setRepetitions(repetitions);
+		cv.setMeasure(measure);
 		return cv;
 	}
 
@@ -49,14 +51,14 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 	@Override
 	public String getKeyPrefix()
 	{
-		return "CVEvaluator-numFolds" + numFolds + "-repetitions" + repetitions
-				+ (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
+		return "CVEvaluator-numFolds" + numFolds + "-repetitions" + repetitions + "-measure"
+				+ measure + (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
 	}
 
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(numFolds, repetitions, dataSet, models);
+		return getKeyContent(numFolds, repetitions, measure, dataSet, models);
 	}
 
 	private List<CV> cvs;
@@ -131,42 +133,60 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 					rs.setResultValue(idx, "ModelName", cv.getModel().getName());
 					rs.setResultValue(idx, "CVSeed", cv.getRandomSeed());
 					rs.setResultValue(idx, "CVFold", p.fold[0]);
-					rs.setResultValue(idx, "AUC", PredictionUtil.AUC(p));
+					rs.setResultValue(idx, measure.toString(),
+							PredictionUtil.getClassificationMeasure(p, measure));
 				}
 			}
 		}
 
-		rs = rs.join("ModelKey");
+		rs = rs.join(new String[] { "ModelKey", "ModelName" }, null, null);
 		String maxAucK = null;
 		double maxAucV = 0.0;
 		for (int i = 0; i < rs.getNumResults(); i++)
 		{
-			double auc = (Double) rs.getResultValue(i, "AUC");
+			double auc = (Double) rs.getResultValue(i, measure.toString());
 			if (auc > maxAucV)
 			{
 				maxAucV = auc;
 				maxAucK = rs.getResultValue(i, "ModelKey").toString();
 			}
 		}
-		//System.err.println("results:\n" + rs.toNiceString());
+		//		{
+		//			rs.removePropery("ModelKey");
+		//			rs.removePropery("CVSeed");
+		//			rs.removePropery("CVFold");
+		//			rs.setNumDecimalPlaces(3);
+		//			rs.sortResults(measure.toString());
+		//			System.err.println("results:\n" + rs.toNiceString());
+		//		}
 		setResult(maxAucK);
 		Model m = getBestModel();
 		Printer.println("best model:\n" + m.getName());
 	}
 
+	public List<Predictions> getPredictions()
+	{
+		List<Predictions> l = new ArrayList<Predictions>();
+		for (CV cv : getCVs())
+		{
+			//			System.out.println(cv.getName() + " " + cv.getModel().getName());
+			if (!cv.isDone())
+				throw new IllegalArgumentException("cv no yet done!");
+			else
+				l.add(cv.getResult());
+		}
+		if (l.size() != repetitions * models.length)
+			throw new IllegalArgumentException();
+		return l;
+	}
+
 	public Model getBestModel()
 	{
 		String result = getResult();
-		Model m = null;
 		for (CV cv : getCVs())
-		{
 			if (cv.getModel().getKey().toString().equals(result))
-			{
-				m = cv.getModel();
-				break;
-			}
-		}
-		return m;
+				return cv.getModel();
+		throw new IllegalStateException("key does not fit");
 	}
 
 	@Override
@@ -188,6 +208,11 @@ public class CVEvaluator extends DefaultJobOwner<String> implements DataSetJobOw
 	public void setRepetitions(int repetitions)
 	{
 		this.repetitions = repetitions;
+	}
+
+	public void setMeasure(PredictionUtil.ClassificationMeasure measure)
+	{
+		this.measure = measure;
 	}
 
 	public static void main(String[] args) throws Exception

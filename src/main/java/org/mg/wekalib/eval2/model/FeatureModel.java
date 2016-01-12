@@ -24,14 +24,11 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	@Override
 	public String getKeyPrefix()
 	{
-		return "FeatureModel"
-				+ File.separator
-				+ featureProvider.getKeyPrefix()
-				+ File.separator
+		return "FeatureModel" + File.separator + featureProvider.getKeyPrefix() + File.separator
 				+ model.getKeyPrefix()
-				+ ((train != null && featureProvider.getTrainingDataset() == null && model
-						.getTrainingDataset() == null) ? (File.separator + train.getKeyPrefix())
-						: "");
+				+ ((train != null && featureProvider.getTrainingDataset() == null
+						&& model.getTrainingDataset() == null)
+								? (File.separator + train.getKeyPrefix()) : "");
 	}
 
 	@Override
@@ -57,10 +54,14 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 			mod.setTestDataset(res[1]);
 			if (!mod.isDone())
 			{
-				// to avoid having a lot of jobs that only store results, this jobs are concated
-				// does only work if model is a single job model
-				return Printer.wrapRunnable("FeatureModel: build model " + getName(),
-						mod.nextJob(), storeResults(mod));
+				Runnable r = mod.nextJob();
+				if (r == null)
+					return null;
+				else
+					// to avoid having a lot of jobs that only store results, this jobs are concated
+					// does only work if model is a single job model
+					return Printer.wrapRunnable("FeatureModel: build model " + getName(), r,
+							storeResults(mod));
 			}
 			else
 			{
@@ -99,9 +100,19 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 		this.model = model;
 	}
 
+	public Model getModel()
+	{
+		return model;
+	}
+
 	public void setFeatureProvider(FeatureProvider featureProvider)
 	{
 		this.featureProvider = featureProvider;
+	}
+
+	public FeatureProvider getFeatureProvider()
+	{
+		return featureProvider;
 	}
 
 	@Override
@@ -120,6 +131,18 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	public void setTestDataset(DataSet test)
 	{
 		this.test = test;
+	}
+
+	@Override
+	public String getAlgorithmParamsNice()
+	{
+		return model.getAlgorithmParamsNice();
+	}
+
+	@Override
+	public String getAlgorithmShortName()
+	{
+		return model.getAlgorithmShortName();
 	}
 
 }

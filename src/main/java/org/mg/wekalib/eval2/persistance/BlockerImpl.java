@@ -4,11 +4,12 @@ import java.lang.management.ManagementFactory;
 
 import org.mg.javalib.io.KeyValueFileStore;
 import org.mg.javalib.util.ThreadUtil;
+import org.mg.wekalib.eval2.job.Printer;
 
 public class BlockerImpl implements Blocker
 {
 	private KeyValueFileStore<String, String> keyValueStore = new KeyValueFileStore<>("jobs/block",
-			false, false);
+			false, false, null, false);
 
 	public BlockerImpl()
 	{
@@ -33,13 +34,23 @@ public class BlockerImpl implements Blocker
 		try
 		{
 			if (keyValueStore.contains(key))
+			{
+				Printer.println("already blocked: " + key);
 				return false;
+			}
+			//			System.err.println("blocking: " + key);
 			keyValueStore.store(key, threadId);
-			ThreadUtil.sleep(333);
-			return threadId.equals(keyValueStore.get(key));
+			ThreadUtil.sleep(1000);
+			boolean blockSucceeded = threadId.equals(keyValueStore.get(key));
+			if (!blockSucceeded)
+				Printer.println_copyToError("could not block: " + key + " NOT EQUAL: " + threadId
+						+ " != " + keyValueStore.get(key));
+			return blockSucceeded;
 		}
 		catch (Exception e)
 		{
+			Printer.println_copyToError(
+					"could not block: " + key + " because of " + e.getMessage());
 			return false;
 		}
 	}

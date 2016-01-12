@@ -14,7 +14,16 @@ public class Printer
 
 	private static int indent = 0;
 
+	private static ThreadLocal<String> outfileSuffix = new ThreadLocal<String>();
+
 	private static ThreadLocal<PrintStream> out = new ThreadLocal<>();
+
+	public static void setOutfileSuffix(String suffix)
+	{
+		if (out.get() != null)
+			throw new IllegalStateException("set suffix before printing anything!");
+		outfileSuffix.set(suffix);
+	}
 
 	private static PrintStream out()
 	{
@@ -26,8 +35,11 @@ public class Printer
 			{
 				try
 				{
-					System.err.println("output goes to " + "jobs/out/" + DB.getThreadID());
-					out.set(new PrintStream(new File("jobs/out/" + DB.getThreadID())));
+					String suffix = "";
+					if (outfileSuffix.get() != null)
+						suffix = "_" + outfileSuffix.get();
+					System.err.println("output goes to " + "jobs/out/" + DB.getThreadID() + suffix);
+					out.set(new PrintStream(new File("jobs/out/" + DB.getThreadID() + suffix)));
 				}
 				catch (FileNotFoundException e)
 				{
@@ -69,6 +81,12 @@ public class Printer
 		out().println(o);
 	}
 
+	public static void println_copyToError(Object o)
+	{
+		println(o);
+		System.err.println(o);
+	}
+
 	public static void println(Throwable t)
 	{
 		printIndent();
@@ -106,4 +124,5 @@ public class Printer
 			}
 		};
 	}
+
 }

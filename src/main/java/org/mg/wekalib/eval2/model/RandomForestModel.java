@@ -40,4 +40,16 @@ public class RandomForestModel extends AbstractModel
 		((RandomForestModel) clonedModel).setNumTrees(numTrees);
 	}
 
+	@Override
+	public String getAlgorithmParamsNice()
+	{
+		return numTrees == 100 ? "" : ("trees:" + numTrees);
+	}
+
+	@Override
+	public String getAlgorithmShortName()
+	{
+		return "RF";
+	}
+
 }

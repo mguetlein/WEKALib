@@ -23,4 +23,16 @@ public class NaiveBayesModel extends AbstractModel
 	protected void cloneParams(Model clonedModel)
 	{
 	}
+
+	@Override
+	public String getAlgorithmShortName()
+	{
+		return "NB";
+	}
+
+	@Override
+	public String getAlgorithmParamsNice()
+	{
+		return "";
+	}
 }

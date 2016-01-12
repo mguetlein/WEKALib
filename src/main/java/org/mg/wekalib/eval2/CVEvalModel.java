@@ -105,6 +105,18 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		return "CVEvalModel" + (train != null ? (File.separator + train.getKeyPrefix()) : "");
 	}
 
+	@Override
+	public String getAlgorithmParamsNice()
+	{
+		return "";
+	}
+
+	@Override
+	public String getAlgorithmShortName()
+	{
+		return getName();
+	}
+
 	public static void main(String[] args) throws Exception
 	{
 		CVEvaluator cv = new CVEvaluator();
@@ -115,8 +127,8 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		CVEvalModel cvM = new CVEvalModel();
 		cvM.setCvEvaluator(cv);
 
-		Instances inst = new Instances(new FileReader(
-				"/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst = new Instances(
+				new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		cvM.setTrainingDataset(new WekaInstancesDataSet(inst));
 		cvM.setTestDataset(new WekaInstancesDataSet(inst));
