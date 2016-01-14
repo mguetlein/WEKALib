@@ -23,7 +23,8 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 
 	protected void setResult(R r)
 	{
-		if (!DB.getBlocker().isBlockedByThread(getKey(), DB.getThreadID()))
+		if (DB.getBlocker() != null
+				&& !DB.getBlocker().isBlockedByThread(getKey(), DB.getThreadID()))
 			throw new IllegalStateException("job not blocked by this thread");
 		if (isDone())
 			throw new IllegalStateException("job already done");
@@ -33,12 +34,13 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 	protected Runnable blockedJob(final String msg, final Runnable r)
 	{
 		final String key = getKey();
-		if (!DB.getBlocker().block(key, DB.getThreadID()))
+		if (DB.getBlocker() != null && !DB.getBlocker().block(key, DB.getThreadID()))
 			return null;
 		// it can happen that a job getsFinished right before/while blocking
 		if (isDone())
 		{
-			DB.getBlocker().unblock(key);
+			if (DB.getBlocker() != null)
+				DB.getBlocker().unblock(key);
 			return null;
 		}
 		else
@@ -53,11 +55,15 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 							throw new IllegalStateException("job already done.");
 						Printer.println(msg + " (" + key + ")");
 						r.run();
-						// wait after done and before unblocking to avoid
-						// simultaneous unblocking by this thread and blocking by other thread
-						ThreadUtil.sleep(1000);
-						if (!isDone())
-							throw new IllegalStateException("job not done.");
+
+						if (DB.getBlocker() != null)
+						{
+							// wait after done and before unblocking to avoid
+							// simultaneous unblocking by this thread and blocking by other thread
+							ThreadUtil.sleep(1000);
+							if (!isDone())
+								throw new IllegalStateException("job not done.");
+						}
 					}
 					catch (Exception e)
 					{
@@ -66,7 +72,8 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 					}
 					finally
 					{
-						DB.getBlocker().unblock(key);
+						if (DB.getBlocker() != null)
+							DB.getBlocker().unblock(key);
 					}
 				}
 			};

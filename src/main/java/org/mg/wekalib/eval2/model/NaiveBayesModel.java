@@ -35,4 +35,10 @@ public class NaiveBayesModel extends AbstractModel
 	{
 		return "";
 	}
+
+	@Override
+	public boolean isFast()
+	{
+		return true;
+	}
 }

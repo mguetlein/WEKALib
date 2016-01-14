@@ -28,7 +28,8 @@ public class PredictionAttributeComputation
 	}
 
 	public static List<PredictionAttribute> compute(Classifier classifier, Instance instance,
-			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction) throws Exception
+			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction)
+					throws Exception
 	{
 
 		int predictionIndex = ArrayUtil.getMaxIndex(distributionForInstance);
@@ -69,7 +70,8 @@ public class PredictionAttributeComputation
 			@Override
 			public int compare(PredictionAttribute o1, PredictionAttribute o2)
 			{
-				return Double.valueOf(o2.getDiffToOrigProp()).compareTo(Double.valueOf(o1.getDiffToOrigProp()));
+				return Double.valueOf(o2.getDiffToOrigProp())
+						.compareTo(Double.valueOf(o1.getDiffToOrigProp()));
 			}
 		});
 

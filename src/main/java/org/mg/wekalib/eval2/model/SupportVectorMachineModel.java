@@ -127,4 +127,10 @@ public class SupportVectorMachineModel extends AbstractModel
 		return s;
 	}
 
+	@Override
+	public boolean isFast()
+	{
+		return false;
+	}
+
 }

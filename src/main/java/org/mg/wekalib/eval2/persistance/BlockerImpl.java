@@ -8,12 +8,11 @@ import org.mg.wekalib.eval2.job.Printer;
 
 public class BlockerImpl implements Blocker
 {
-	private KeyValueFileStore<String, String> keyValueStore = new KeyValueFileStore<>("jobs/block",
-			false, false, null, false);
+	private KeyValueFileStore<String, String> keyValueStore;
 
-	public BlockerImpl()
+	public BlockerImpl(String dir)
 	{
-		//		keyValueStore.clear();
+		keyValueStore = new KeyValueFileStore<>(dir, false, false, null, false);
 	}
 
 	@Override

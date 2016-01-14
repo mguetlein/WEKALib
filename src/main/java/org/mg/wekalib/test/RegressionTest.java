@@ -11,7 +11,7 @@ import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.classifier.RegressionByDiscretizationW;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
@@ -25,7 +25,12 @@ public class RegressionTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		String datasets[] = new String[] { "anneal","anneal.ORIG","audiology","autos","balance-scale","breast-cancer","breast-w","colic","colic.ORIG","credit-a","credit-g","diabetes","glass","heart-c","heart-h","heart-statlog","hepatitis","hypothyroid.arff","ionosphere","iris","kr-vs-kp","labor","letter","lymph","mushroom","primary-tumor","segment","sick","sonar","soybean","splice","vehicle","vote","vowel","waveform-5000","zoo" };
+		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos",
+				"balance-scale", "breast-cancer", "breast-w", "colic", "colic.ORIG", "credit-a",
+				"credit-g", "diabetes", "glass", "heart-c", "heart-h", "heart-statlog", "hepatitis",
+				"hypothyroid.arff", "ionosphere", "iris", "kr-vs-kp", "labor", "letter", "lymph",
+				"mushroom", "primary-tumor", "segment", "sick", "sonar", "soybean", "splice",
+				"vehicle", "vote", "vowel", "waveform-5000", "zoo" };
 		//too-big: "quake"
 		//unstable/not-modable: "fruitfly","breastTumor", "bolts"
 		ArrayUtil.scramble(datasets);
@@ -38,11 +43,12 @@ public class RegressionTest
 			{
 				while (true)
 				{
-					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset",
-							"Pearson");
+					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm",
+							"Dataset", "Pearson");
 					bp.setHideMean(true);
 
-					SwingUtil.showInFrame(bp.getChart(), "Pearson", false, new Dimension(1200, 800));
+					SwingUtil.showInFrame(bp.getChart(), "Pearson", false,
+							new Dimension(1200, 800));
 					SwingUtil.waitWhileWindowsVisible();
 				}
 
@@ -80,7 +86,8 @@ public class RegressionTest
 	{
 		if (c instanceof SingleClassifierEnhancer)
 		{
-			return c.getClass().getSimpleName() + "-" + getName(((SingleClassifierEnhancer) c).getClassifier());
+			return c.getClass().getSimpleName() + "-"
+					+ getName(((SingleClassifierEnhancer) c).getClassifier());
 		}
 		else
 			return c.getClass().getSimpleName();
@@ -88,12 +95,13 @@ public class RegressionTest
 
 	public static boolean run(String data, int seed) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/numeric/" + data
-				+ ".arff"));
+		Instances inst = new Instances(new FileReader(
+				System.getProperty("user.home") + "/data/weka/numeric/" + data + ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
 
-		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
+		System.out
+				.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
 
 		if (inst.numInstances() < 30)
 		{

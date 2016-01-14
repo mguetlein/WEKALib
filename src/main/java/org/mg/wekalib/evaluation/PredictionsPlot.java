@@ -25,7 +25,6 @@ import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.ListUtil;
 import org.mg.javalib.util.StringUtil;
 import org.mg.javalib.util.SwingUtil;
-import org.mg.wekautil.Predictions;
 
 public class PredictionsPlot
 {

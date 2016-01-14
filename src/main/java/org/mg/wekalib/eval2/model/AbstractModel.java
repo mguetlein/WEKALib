@@ -5,7 +5,7 @@ import java.io.File;
 import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.SMO;
@@ -96,6 +96,8 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	}
 
 	public abstract Classifier getWekaClassifer();
+
+	public abstract boolean isFast();
 
 	protected abstract String getParamKey();
 

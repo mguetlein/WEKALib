@@ -11,11 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.mg.javalib.gui.property.BooleanProperty;
-import org.mg.javalib.gui.property.DoubleProperty;
-import org.mg.javalib.gui.property.FileProperty;
-import org.mg.javalib.gui.property.IntegerProperty;
-import org.mg.javalib.gui.property.Property;
 import org.mg.javalib.util.ArrayUtil;
 
 import weka.clusterers.HierarchicalClusterer;

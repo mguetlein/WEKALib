@@ -14,7 +14,6 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.FileUtil;
 import org.mg.javalib.util.ListUtil;
-import org.mg.wekautil.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.core.Attribute;

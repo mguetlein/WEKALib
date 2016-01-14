@@ -13,10 +13,8 @@ import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
 import org.mg.wekalib.eval2.model.Model;
 import org.mg.wekalib.eval2.model.SupportVectorMachineModel;
-import org.mg.wekalib.eval2.persistance.DB;
-import org.mg.wekalib.eval2.persistance.ResultProviderImpl;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
@@ -26,7 +24,7 @@ public class ClassificationTest2
 {
 	public static void main(String[] args) throws Exception
 	{
-		DB.setResultProvider(new ResultProviderImpl());
+		//DB.setResultProvider(new ResultProviderImpl("/tmp/jobs/store", "/tmp/jovs/tmp"));
 
 		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos",
 				"breast-cancer", "breast-w", "colic", "colic.ORIG", "credit-a", "credit-g",
@@ -96,13 +94,13 @@ public class ClassificationTest2
 
 	public static boolean run(String data, int seed) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home")
-				+ "/data/weka/nominal/" + data + ".arff"));
+		Instances inst = new Instances(new FileReader(
+				System.getProperty("user.home") + "/data/weka/nominal/" + data + ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
-		WekaInstancesDataSet ds = new WekaInstancesDataSet(inst);
-		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:"
-				+ inst.numAttributes());
+		WekaInstancesDataSet ds = new WekaInstancesDataSet(inst, 0);
+		System.out
+				.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
 
 		if (inst.numInstances() < 30)
 		{
@@ -202,7 +200,7 @@ public class ClassificationTest2
 					res.setResultValue(idx, "Dataset", data + " " + inst.numAttributes());
 					res.setResultValue(idx, "Fold", pf.fold[0]);
 					res.setResultValue(idx, "AUC", PredictionUtil.AUC(pf));
-					res.setResultValue(idx, "AUPRC", PredictionUtil.AUPRC(pf));
+					res.setResultValue(idx, "AUPRC", PredictionUtil.AUPRC(pf, 1.0));
 
 				}
 				//				}

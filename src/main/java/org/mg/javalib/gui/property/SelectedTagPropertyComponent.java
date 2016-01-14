@@ -10,8 +10,6 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JList;
 
-import org.mg.javalib.gui.property.PropertyComponent;
-
 import weka.core.SelectedTag;
 import weka.core.Tag;
 

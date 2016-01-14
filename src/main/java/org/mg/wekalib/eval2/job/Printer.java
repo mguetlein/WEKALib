@@ -10,24 +10,23 @@ import org.mg.wekalib.eval2.persistance.DB;
 
 public class Printer
 {
-	public static boolean PRINT_TO_SYSTEM_OUT = false;
-
 	private static int indent = 0;
 
-	private static ThreadLocal<String> outfileSuffix = new ThreadLocal<String>();
+	private static String outfileDir = null;
+
+	private static String outfileSuffix = null;
 
 	private static ThreadLocal<PrintStream> out = new ThreadLocal<>();
 
-	public static void setOutfileSuffix(String suffix)
+	public static void setOutfile(String dir, String suffix)
 	{
-		if (out.get() != null)
-			throw new IllegalStateException("set suffix before printing anything!");
-		outfileSuffix.set(suffix);
+		outfileDir = dir;
+		outfileSuffix = suffix;
 	}
 
 	private static PrintStream out()
 	{
-		if (PRINT_TO_SYSTEM_OUT)
+		if (outfileDir == null)
 			return System.out;
 		else
 		{
@@ -35,11 +34,11 @@ public class Printer
 			{
 				try
 				{
-					String suffix = "";
-					if (outfileSuffix.get() != null)
-						suffix = "_" + outfileSuffix.get();
-					System.err.println("output goes to " + "jobs/out/" + DB.getThreadID() + suffix);
-					out.set(new PrintStream(new File("jobs/out/" + DB.getThreadID() + suffix)));
+					String file = outfileDir + "/" + DB.getThreadID();
+					if (outfileSuffix != null)
+						file += "_" + outfileSuffix;
+					System.err.println("output goes to " + file);
+					out.set(new PrintStream(new File(file)));
 				}
 				catch (FileNotFoundException e)
 				{

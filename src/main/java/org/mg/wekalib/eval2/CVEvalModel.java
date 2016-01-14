@@ -11,7 +11,7 @@ import org.mg.wekalib.eval2.model.Model;
 import org.mg.wekalib.eval2.model.NaiveBayesModel;
 import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.core.Instances;
 
@@ -130,8 +130,8 @@ public class CVEvalModel extends DefaultJobOwner<Predictions> implements Model
 		Instances inst = new Instances(
 				new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
-		cvM.setTrainingDataset(new WekaInstancesDataSet(inst));
-		cvM.setTestDataset(new WekaInstancesDataSet(inst));
+		cvM.setTrainingDataset(new WekaInstancesDataSet(inst, 1));
+		cvM.setTestDataset(new WekaInstancesDataSet(inst, 1));
 
 		cvM.runSequentially();
 		System.out.println(PredictionUtil.summaryClassification(cvM.getResult()));

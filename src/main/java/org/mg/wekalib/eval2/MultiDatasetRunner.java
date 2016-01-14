@@ -15,7 +15,7 @@ import org.mg.wekalib.eval2.job.JobOwner;
 import org.mg.wekalib.eval2.job.Printer;
 import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.core.Instances;
 
@@ -88,7 +88,8 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 				if (r != null)
 					return Printer.wrapRunnable(
 							"MultiDataset: run " + (ArrayUtil.indexOf(dataSets, d) + 1) + "/"
-									+ dataSets.length + " with dataset " + d.getName(), r);
+									+ dataSets.length + " with dataset " + d.getName(),
+							r);
 			}
 		}
 
@@ -124,14 +125,14 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 
 	public static void main(String[] args) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(
-				"/home/martin/data/weka/nominal/breast-w.arff"));
-		Instances inst2 = new Instances(new FileReader(
-				"/home/martin/data/weka/nominal/credit-a.arff"));
+		Instances inst = new Instances(
+				new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst2 = new Instances(
+				new FileReader("/home/martin/data/weka/nominal/credit-a.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst2.setClassIndex(inst2.numAttributes() - 1);
 		MultiDatasetRunner<Predictions> run = new MultiDatasetRunner<>();
-		run.setDataSets(new WekaInstancesDataSet(inst), new WekaInstancesDataSet(inst2));
+		run.setDataSets(new WekaInstancesDataSet(inst, 1), new WekaInstancesDataSet(inst2, 0));
 		CV cv = new CV();
 		cv.setModel(new RandomForestModel());
 		cv.setNumFolds(5);

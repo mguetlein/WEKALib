@@ -15,6 +15,8 @@ public interface DataSet extends KeyProvider, ComposedKeyProvider
 
 	public Instances getWekaInstances();
 
+	public int getPositiveClass();
+
 	public DataSet getFilteredDataset(String name, List<Integer> idx);
 
 	public int getSize();

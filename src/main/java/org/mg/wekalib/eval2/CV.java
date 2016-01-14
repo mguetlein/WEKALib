@@ -11,7 +11,7 @@ import org.mg.wekalib.eval2.job.Printer;
 import org.mg.wekalib.eval2.model.Model;
 import org.mg.wekalib.eval2.model.RandomForestModel;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.core.Instances;
 
@@ -76,8 +76,8 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 				allDone = false;
 				Runnable r = m.nextJob();
 				if (r != null)
-					return Printer.wrapRunnable("CV: fold " + (f + 1) + "/" + numFolds + ", seed "
-							+ randomSeed, r);
+					return Printer.wrapRunnable(
+							"CV: fold " + (f + 1) + "/" + numFolds + ", seed " + randomSeed, r);
 			}
 		}
 
@@ -142,13 +142,18 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	public static void main(String[] args) throws Exception
 	{
 		CV cv = new CV();
-		Instances inst = new Instances(new FileReader(
-				"/home/martin/data/weka/nominal/breast-w.arff"));
+		Instances inst = new Instances(
+				new FileReader("/home/martin/data/weka/nominal/breast-w.arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
-		cv.setDataSet(new WekaInstancesDataSet(inst));
+		cv.setDataSet(new WekaInstancesDataSet(inst, 1));
 		cv.setModel(new RandomForestModel());
 		cv.runSequentially();
 		System.out.println(PredictionUtil.summaryClassification(cv.getResult()));
 
+	}
+
+	public DataSet getDataset()
+	{
+		return dataSet;
 	}
 }

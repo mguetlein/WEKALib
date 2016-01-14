@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Random;
 
 import org.mg.javalib.util.ArrayUtil;
-import org.mg.wekautil.Predictions;
 
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
@@ -34,8 +33,8 @@ public class CVPredictionsEvaluation extends Evaluation
 		}
 
 		@Override
-		public void crossValidateModel(Classifier classifier, Instances data, int numFolds, Random random,
-				Object... forPredictionsPrinting) throws Exception
+		public void crossValidateModel(Classifier classifier, Instances data, int numFolds,
+				Random random, Object... forPredictionsPrinting) throws Exception
 		{
 			// Make a copy of the data we can reorder
 			data = new Instances(data);
@@ -108,8 +107,8 @@ public class CVPredictionsEvaluation extends Evaluation
 			}
 		}
 
-		public double[] evaluateModel(Classifier classifier, Instances data, Object... forPredictionsPrinting)
-				throws Exception
+		public double[] evaluateModel(Classifier classifier, Instances data,
+				Object... forPredictionsPrinting) throws Exception
 		{
 			// for predictions printing
 			AbstractOutput classificationOutput = null;
@@ -130,7 +129,8 @@ public class CVPredictionsEvaluation extends Evaluation
 				{
 					dataPred.instance(i).setClassMissing();
 				}
-				double[][] preds = ((BatchPredictor) classifier).distributionsForInstances(dataPred);
+				double[][] preds = ((BatchPredictor) classifier)
+						.distributionsForInstances(dataPred);
 				for (int i = 0; i < data.numInstances(); i++)
 				{
 					double[] p = preds[i];
@@ -147,29 +147,37 @@ public class CVPredictionsEvaluation extends Evaluation
 
 				for (int i = 0; i < data.numInstances(); i++)
 				{
-					predictions[i] = evaluateModelOnceAndRecordPrediction(classifier, data.instance(i));
+					predictions[i] = evaluateModelOnceAndRecordPrediction(classifier,
+							data.instance(i));
 
 					// --- changes by MG - start ------------------------------------
 					double conf = Double.NaN;
 					if (classifier instanceof ConditionalDensityEstimator)
-						conf = ((ConditionalDensityEstimator) classifier).logDensity(data.instance(i), predictions[i]);
+						conf = ((ConditionalDensityEstimator) classifier)
+								.logDensity(data.instance(i), predictions[i]);
 					else
 					{
 						Prediction p = m_Predictions.get(i);
 						if (p instanceof NominalPrediction)
 						{
 							if (predictions[i] == 0.0)
-								conf = ((NominalPrediction) p).distribution()[0];
+							{
+								//conf = ((NominalPrediction) p).distribution()[0];
+								conf = (((NominalPrediction) p).distribution()[0] - 0.5) * 2;
+							}
 							else if (predictions[i] == 1.0)
-								conf = 1 - ((NominalPrediction) p).distribution()[1];
+							{
+								//conf = 1 - ((NominalPrediction) p).distribution()[1];
+								conf = (((NominalPrediction) p).distribution()[1] - 0.5) * 2;
+							}
 							else
 								throw new IllegalStateException(
 										"prediction conf not yet implemented for non-binary class");
 						}
 					}
 
-					PredictionUtil.add(cvPredictions, data.instance(i).classValue(), predictions[i], conf, fold,
-							origTestIndices.isEmpty() ? -1 : origTestIndices.get(i));
+					PredictionUtil.add(cvPredictions, data.instance(i).classValue(), predictions[i],
+							conf, fold, origTestIndices.isEmpty() ? -1 : origTestIndices.get(i));
 					// --- changes by MG - end ------------------------------------
 
 					if (classificationOutput != null)
@@ -197,10 +205,12 @@ public class CVPredictionsEvaluation extends Evaluation
 	{
 		try
 		{
-			Instances inst = new Instances(new FileReader("/home/martin/data/weka/numeric/baskball.arff"));
+			Instances inst = new Instances(
+					new FileReader("/home/martin/data/weka/numeric/baskball.arff"));
 			inst.setClassIndex(inst.numAttributes() - 1);
 			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(inst);
-			eval.crossValidateModel(new RegressionByDiscretization(), inst, 10, new Random(), new Object[0]);
+			eval.crossValidateModel(new RegressionByDiscretization(), inst, 10, new Random(),
+					new Object[0]);
 			System.out.println(eval.correlationCoefficient());
 
 			Predictions p = eval.getCvPredictions();

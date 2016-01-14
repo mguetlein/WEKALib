@@ -11,15 +11,23 @@ import weka.core.Instances;
 
 public class WekaInstancesDataSet extends AbstractDataSet implements Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	Instances inst;
 	String key;
+	int positiveClass;
 
-	public WekaInstancesDataSet(Instances inst)
+	public WekaInstancesDataSet(Instances inst, int positiveClass)
 	{
 		this.inst = inst;
-		key = DigestUtils.md5Hex(inst.toString());
+		this.positiveClass = positiveClass;
+		key = DigestUtils.md5Hex(inst.toString() + "#" + positiveClass);
+	}
+
+	@Override
+	public int getPositiveClass()
+	{
+		return positiveClass;
 	}
 
 	@Override
@@ -56,7 +64,7 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 		data.setClassIndex(inst.classIndex());
 		for (Integer i : idx)
 			data.add(inst.get(i));
-		return new WekaInstancesDataSet(data);
+		return new WekaInstancesDataSet(data, positiveClass);
 	}
 
 }

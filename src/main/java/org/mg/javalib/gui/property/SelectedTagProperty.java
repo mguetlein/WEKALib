@@ -4,8 +4,6 @@ import java.util.Properties;
 
 import javax.swing.JComponent;
 
-import org.mg.javalib.gui.property.AbstractProperty;
-
 import weka.core.SelectedTag;
 
 public class SelectedTagProperty extends AbstractProperty

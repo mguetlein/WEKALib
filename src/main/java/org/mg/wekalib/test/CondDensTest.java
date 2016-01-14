@@ -25,8 +25,8 @@ import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.classifier.MyBagging;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
+import org.mg.wekalib.evaluation.Predictions;
 import org.mg.wekalib.evaluation.PredictionsPlot;
-import org.mg.wekautil.Predictions;
 
 import weka.classifiers.lazy.IBk;
 import weka.core.Instance;
@@ -36,13 +36,14 @@ public class CondDensTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		for (String s : new String[] { "auto93.arff", "autoHorse.arff", "autoMpg.arff", "autoPrice.arff",
-				"baskball.arff", "bodyfat.arff", "bolts.arff", "breastTumor.arff", "cholesterol.arff",
-				"cleveland.arff", "cloud.arff", "cpu.arff", "detroit.arff", "echoMonths.arff", "elusage.arff",
-				"fishcatch.arff", "fruitfly.arff", "gascons.arff", "housing.arff", "hungarian.arff", "longley.arff",
-				"lowbwt.arff", "mbagrade.arff", "meta.arff", "pbc.arff", "pharynx.arff", "pollution.arff",
-				"pwLinear.arff", "quake.arff", "schlvote.arff", "sensory.arff", "servo.arff", "sleep.arff",
-				"strike.arff", "veteran.arff", "vineyard.arff" })
+		for (String s : new String[] { "auto93.arff", "autoHorse.arff", "autoMpg.arff",
+				"autoPrice.arff", "baskball.arff", "bodyfat.arff", "bolts.arff", "breastTumor.arff",
+				"cholesterol.arff", "cleveland.arff", "cloud.arff", "cpu.arff", "detroit.arff",
+				"echoMonths.arff", "elusage.arff", "fishcatch.arff", "fruitfly.arff",
+				"gascons.arff", "housing.arff", "hungarian.arff", "longley.arff", "lowbwt.arff",
+				"mbagrade.arff", "meta.arff", "pbc.arff", "pharynx.arff", "pollution.arff",
+				"pwLinear.arff", "quake.arff", "schlvote.arff", "sensory.arff", "servo.arff",
+				"sleep.arff", "strike.arff", "veteran.arff", "vineyard.arff" })
 		{
 			testDensitiy(System.getProperty("user.home") + "/data/weka/numeric/" + s);
 
@@ -61,21 +62,19 @@ public class CondDensTest
 		System.out.println("Median Corr diff: " + diffCorr.getPercentile(50));
 	}
 
-	public static void plot(String filePrefix, String title, String subtitles, List<Double> actualAll,
-			List<Double> predictedAll, List<Double> actualReduced, List<Double> predictedReduced)
+	public static void plot(String filePrefix, String title, String subtitles,
+			List<Double> actualAll, List<Double> predictedAll, List<Double> actualReduced,
+			List<Double> predictedReduced)
 	{
 		DefaultXYDataset d = new DefaultXYDataset();
 
 		if (predictedReduced != null)
-			d.addSeries(
-					"reduced",
+			d.addSeries("reduced",
 					new double[][] { ArrayUtil.toPrimitiveDoubleArray(predictedReduced),
 							ArrayUtil.toPrimitiveDoubleArray(actualReduced) });
 
-		d.addSeries(
-				"all",
-				new double[][] { ArrayUtil.toPrimitiveDoubleArray(predictedAll),
-						ArrayUtil.toPrimitiveDoubleArray(actualAll) });
+		d.addSeries("all", new double[][] { ArrayUtil.toPrimitiveDoubleArray(predictedAll),
+				ArrayUtil.toPrimitiveDoubleArray(actualAll) });
 
 		//		PearsonsCorrelation p = new PearsonsCorrelation();
 		//		System.out.println("all "
@@ -101,7 +100,8 @@ public class CondDensTest
 		yAxis.setRange(min, max);
 		xAxis.setRange(min, max);
 		XYAnnotation diagonal = new XYLineAnnotation(xAxis.getRange().getLowerBound(),
-				yAxis.getRange().getLowerBound(), xAxis.getRange().getUpperBound(), yAxis.getRange().getUpperBound());
+				yAxis.getRange().getLowerBound(), xAxis.getRange().getUpperBound(),
+				yAxis.getRange().getUpperBound());
 		plot.addAnnotation(diagonal);
 		ChartPanel p = new ChartPanel(f);
 		p.getChart().setTitle(title);
@@ -116,10 +116,14 @@ public class CondDensTest
 		final Font oldRegularFont = chartTheme.getRegularFont();
 		final Font oldSmallFont = chartTheme.getSmallFont();
 
-		final Font extraLargeFont = new Font("Monospaced", oldExtraLargeFont.getStyle(), oldExtraLargeFont.getSize());
-		final Font largeFont = new Font("Monospaced", oldLargeFont.getStyle(), oldLargeFont.getSize());
-		final Font regularFont = new Font("Monospaced", oldRegularFont.getStyle(), oldRegularFont.getSize());
-		final Font smallFont = new Font("Monospaced", oldSmallFont.getStyle(), oldSmallFont.getSize());
+		final Font extraLargeFont = new Font("Monospaced", oldExtraLargeFont.getStyle(),
+				oldExtraLargeFont.getSize());
+		final Font largeFont = new Font("Monospaced", oldLargeFont.getStyle(),
+				oldLargeFont.getSize());
+		final Font regularFont = new Font("Monospaced", oldRegularFont.getStyle(),
+				oldRegularFont.getSize());
+		final Font smallFont = new Font("Monospaced", oldSmallFont.getStyle(),
+				oldSmallFont.getSize());
 
 		chartTheme.setExtraLargeFont(extraLargeFont);
 		chartTheme.setLargeFont(largeFont);
@@ -128,7 +132,8 @@ public class CondDensTest
 
 		chartTheme.apply(p.getChart());
 
-		FreeChartUtil.toPNGFile("/tmp/density/" + filePrefix + "_" + title + ".png", p, new Dimension(700, 900));
+		FreeChartUtil.toPNGFile("/tmp/density/" + filePrefix + "_" + title + ".png", p,
+				new Dimension(700, 900));
 
 		SwingUtil.showInFrame(p, "Plot", false, new Dimension(600, 800));
 	}
@@ -274,11 +279,15 @@ public class CondDensTest
 				dc = (int) (((c2 - c1) / c1) * 100);
 
 				System.out.println();
-				System.out.println(new File(data).getName().replace(".arff", "") + " #i:" + inst.size());
+				System.out.println(
+						new File(data).getName().replace(".arff", "") + " #i:" + inst.size());
 				System.out.println("             RMSE pearson");
-				System.out.println("test       " + String.format("%.2f", r1) + " " + String.format("%.2f", c1) + "");
-				System.out.println("test-top   " + String.format("%.2f", r2) + " " + String.format("%.2f", c2) + "");
-				System.out.println("% diff    " + String.format("%4d", dr) + " " + String.format("%4d", dc));
+				System.out.println("test       " + String.format("%.2f", r1) + " "
+						+ String.format("%.2f", c1) + "");
+				System.out.println("test-top   " + String.format("%.2f", r2) + " "
+						+ String.format("%.2f", c2) + "");
+				System.out.println(
+						"% diff    " + String.format("%4d", dr) + " " + String.format("%4d", dc));
 
 				PredictionsPlot plot = new PredictionsPlot(p);
 				plot.setTitle(new File(data).getName().replace(".arff", ""));

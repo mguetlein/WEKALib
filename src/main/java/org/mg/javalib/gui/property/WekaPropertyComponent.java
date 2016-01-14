@@ -6,8 +6,6 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JPanel;
 
-import org.mg.javalib.gui.property.PropertyComponent;
-
 import weka.core.DistanceFunction;
 import weka.gui.GenericObjectEditor;
 

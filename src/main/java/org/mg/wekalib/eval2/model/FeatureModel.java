@@ -6,7 +6,7 @@ import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.eval2.job.FeatureProvider;
 import org.mg.wekalib.eval2.job.Printer;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 {

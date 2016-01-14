@@ -30,6 +30,12 @@ public class FoldDataSet extends AbstractDataSet
 	}
 
 	@Override
+	public int getPositiveClass()
+	{
+		return parent.getPositiveClass();
+	}
+
+	@Override
 	public String getKeyContent()
 	{
 		return getKeyContent(parent, numFolds, randomSeed, fold, train);

@@ -2,7 +2,7 @@ package org.mg.wekalib.eval2.model;
 
 import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.JobOwner;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 public interface Model extends JobOwner<Predictions> //, Serializable
 {

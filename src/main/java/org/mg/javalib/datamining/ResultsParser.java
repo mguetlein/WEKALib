@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import org.mg.javalib.datamining.ResultSet;
-import org.mg.javalib.datamining.ResultSetBoxPlot;
 import org.mg.javalib.freechart.FreeChartUtil;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;

@@ -12,7 +12,6 @@ import org.apache.commons.math3.util.FastMath;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
-import org.mg.wekautil.Predictions;
 
 import weka.classifiers.evaluation.NominalPrediction;
 import weka.classifiers.evaluation.Prediction;
@@ -618,14 +617,14 @@ public class PredictionUtil
 		return ArrayUtil.toPrimitiveDoubleArray(pPerFold);
 	}
 
-	private static Instances thresholdCurveInstances(Predictions preds)
+	private static Instances thresholdCurveInstances(Predictions preds, double positiveClassValue)
 	{
 		ArrayList<Prediction> l = new ArrayList<>();
 		for (int i = 0; i < preds.actual.length; i++)
 		{
 			double p[] = new double[2];
 			double prob = 0.5 + 0.5 * preds.confidence[i];
-			if (preds.predicted[i] == 1.0)
+			if (preds.predicted[i] != 0.0)
 			{
 				p[1] = prob;
 				p[0] = 1 - prob;
@@ -638,17 +637,19 @@ public class PredictionUtil
 			l.add(new NominalPrediction(preds.actual[i], p));
 		}
 		ThresholdCurve tc = new ThresholdCurve();
-		return tc.getCurve(l, 0);
+		Instances inst = tc.getCurve(l, (int) positiveClassValue);
+		//		System.out.println(inst);
+		return inst;
 	}
 
 	public static double AUC(Predictions preds)
 	{
-		return ThresholdCurve.getROCArea(thresholdCurveInstances(preds));
+		return ThresholdCurve.getROCArea(thresholdCurveInstances(preds, 0.0));
 	}
 
-	public static double AUPRC(Predictions preds)
+	public static double AUPRC(Predictions preds, double postiveClassValue)
 	{
-		return ThresholdCurve.getPRCArea(thresholdCurveInstances(preds));
+		return ThresholdCurve.getPRCArea(thresholdCurveInstances(preds, postiveClassValue));
 	}
 
 	public static double accuracy(Predictions p)
@@ -660,22 +661,22 @@ public class PredictionUtil
 		return correct / (double) p.predicted.length;
 	}
 
-	public static double recall(Predictions p)
+	public static double recall(Predictions p, double positiveClassValue)
 	{
-		return sensitivity(p);
+		return sensitivity(p, positiveClassValue);
 	}
 
-	public static double truePositiveRate(Predictions p)
+	public static double truePositiveRate(Predictions p, double positiveClassValue)
 	{
-		return sensitivity(p);
+		return sensitivity(p, positiveClassValue);
 	}
 
-	public static double sensitivity(Predictions p)
+	public static double sensitivity(Predictions p, double positiveClassValue)
 	{
 		double correct = 0, total = 0;
 		for (int j = 0; j < p.actual.length; j++)
 		{
-			if (p.actual[j] == 1.0)
+			if (p.actual[j] == positiveClassValue)
 			{
 				if (p.predicted[j] == p.actual[j])
 					correct++;
@@ -687,17 +688,17 @@ public class PredictionUtil
 		return correct / total;
 	}
 
-	public static double trueNegativeRate(Predictions p)
+	public static double trueNegativeRate(Predictions p, double positiveClassValue)
 	{
-		return specificity(p);
+		return specificity(p, positiveClassValue);
 	}
 
-	public static double specificity(Predictions p)
+	public static double specificity(Predictions p, double positiveClassValue)
 	{
 		double correct = 0, total = 0;
 		for (int j = 0; j < p.actual.length; j++)
 		{
-			if (p.actual[j] == 0.0)
+			if (p.actual[j] != positiveClassValue)
 			{
 				if (p.predicted[j] == p.actual[j])
 					correct++;
@@ -733,20 +734,21 @@ public class PredictionUtil
 		}
 	}
 
-	public static double getClassificationMeasure(Predictions p, ClassificationMeasure m)
+	public static double getClassificationMeasure(Predictions p, ClassificationMeasure m,
+			double positiveClassValue)
 	{
 		switch (m)
 		{
 			case AUC:
 				return AUC(p);
 			case AUPRC:
-				return AUPRC(p);
+				return AUPRC(p, positiveClassValue);
 			case accuracy:
 				return accuracy(p);
 			case sensitivity:
-				return sensitivity(p);
+				return sensitivity(p, positiveClassValue);
 			case specificity:
-				return specificity(p);
+				return specificity(p, positiveClassValue);
 			default:
 				throw new IllegalArgumentException();
 		}

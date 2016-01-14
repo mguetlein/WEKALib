@@ -52,4 +52,10 @@ public class RandomForestModel extends AbstractModel
 		return "RF";
 	}
 
+	@Override
+	public boolean isFast()
+	{
+		return true;
+	}
+
 }

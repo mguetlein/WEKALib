@@ -4,8 +4,8 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 import org.mg.javalib.util.StringUtil;
 import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.evaluation.PredictionUtil;
+import org.mg.wekalib.evaluation.Predictions;
 import org.mg.wekalib.evaluation.PredictionsPlot;
-import org.mg.wekautil.Predictions;
 
 public class PearsonVsRmseTest
 {
@@ -27,8 +27,8 @@ public class PearsonVsRmseTest
 		Predictions pred2 = PredictionUtil.clone(pred);
 		PredictionUtil.add(pred, 10, 18, 0.0, 1, 1);
 
-		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred2, pred }, new String[] { "without-outlier",
-				"with-outlier" });
+		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred2, pred },
+				new String[] { "without-outlier", "with-outlier" });
 		plot.setTitle("Outlier");
 		plot.show(false);
 		plot.plotToPngFile(baseDir + "2_outlier.png");
@@ -36,8 +36,8 @@ public class PearsonVsRmseTest
 
 	public static void deviation(boolean errorEqualsDeviation)
 	{
-		String file = baseDir
-				+ (errorEqualsDeviation ? "1b_errorEqualsDeviation.png" : "1a_sameDeviationDifferentError.png");
+		String file = baseDir + (errorEqualsDeviation ? "1b_errorEqualsDeviation.png"
+				: "1a_sameDeviationDifferentError.png");
 
 		String name = "";
 		Predictions pred = new Predictions();
@@ -76,8 +76,10 @@ public class PearsonVsRmseTest
 				PredictionUtil.add(pred2, a, p, 1, 1, 1);
 			}
 		}
-		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred, pred2 }, new String[] { name, name2 });
-		plot.setTitle(errorEqualsDeviation ? "Error = Standard deviation" : "Same deviation, different error");
+		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred, pred2 },
+				new String[] { name, name2 });
+		plot.setTitle(errorEqualsDeviation ? "Error = Standard deviation"
+				: "Same deviation, different error");
 		plot.show(false);
 		plot.plotToPngFile(file);
 	}
@@ -114,8 +116,8 @@ public class PearsonVsRmseTest
 			PredictionUtil.add(pred2, a, p, 1.0, 1, 1);
 		}
 
-		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred, pred2 }, new String[] { "unbalanced",
-				"straight" });
+		PredictionsPlot plot = new PredictionsPlot(new Predictions[] { pred, pred2 },
+				new String[] { "unbalanced", "straight" });
 		plot.setTitle("Unbalanced");
 		plot.show(false);
 		plot.plotToPngFile(baseDir + "3_unbalanced.png");

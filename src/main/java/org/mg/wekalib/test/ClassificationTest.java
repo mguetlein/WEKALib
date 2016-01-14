@@ -12,7 +12,7 @@ import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
-import org.mg.wekautil.Predictions;
+import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
@@ -25,10 +25,11 @@ public class ClassificationTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos", "breast-cancer", "breast-w",
-				"colic", "colic.ORIG", "credit-a", "credit-g", "diabetes", "glass", "heart-c", "heart-h",
-				"heart-statlog", "hypothyroid", "ionosphere", "labor", "lymph", "primary-tumor", "segment", "sonar",
-				"soybean", "vehicle", "vote", "vowel", "zoo" };
+		String datasets[] = new String[] { "anneal", "anneal.ORIG", "audiology", "autos",
+				"breast-cancer", "breast-w", "colic", "colic.ORIG", "credit-a", "credit-g",
+				"diabetes", "glass", "heart-c", "heart-h", "heart-statlog", "hypothyroid",
+				"ionosphere", "labor", "lymph", "primary-tumor", "segment", "sonar", "soybean",
+				"vehicle", "vote", "vowel", "zoo" };
 		//too-big: "letter", "kr-vs-kp", "splice", waveform-5000, "sick"
 		//too-easy: "mushroom"
 		//too-unstable: "hepatitis"
@@ -42,7 +43,8 @@ public class ClassificationTest
 			{
 				while (true)
 				{
-					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm", "Dataset", "AUC");
+					ResultSetBoxPlot bp = new ResultSetBoxPlot(res, "", "Performance", "Algorithm",
+							"Dataset", "AUC");
 					bp.setHideMean(true);
 					SwingUtil.showInFrame(bp.getChart(), "AUC", false, new Dimension(1200, 800));
 					SwingUtil.waitWhileWindowsVisible();
@@ -81,7 +83,8 @@ public class ClassificationTest
 	{
 		if (c instanceof SingleClassifierEnhancer)
 		{
-			return c.getClass().getSimpleName() + "-" + getName(((SingleClassifierEnhancer) c).getClassifier());
+			return c.getClass().getSimpleName() + "-"
+					+ getName(((SingleClassifierEnhancer) c).getClassifier());
 		}
 		else
 			return c.getClass().getSimpleName();
@@ -89,11 +92,12 @@ public class ClassificationTest
 
 	public static boolean run(String data, int seed) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/nominal/" + data
-				+ ".arff"));
+		Instances inst = new Instances(new FileReader(
+				System.getProperty("user.home") + "/data/weka/nominal/" + data + ".arff"));
 		inst.setClassIndex(inst.numAttributes() - 1);
 		inst.randomize(new Random(2));
-		System.out.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
+		System.out
+				.println(data + " #inst:" + inst.numInstances() + " #feat:" + inst.numAttributes());
 
 		if (inst.numInstances() < 30)
 		{
