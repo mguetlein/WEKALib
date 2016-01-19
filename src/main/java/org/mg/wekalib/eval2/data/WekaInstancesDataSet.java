@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.mg.javalib.util.CountedSet;
 
 import weka.core.Attribute;
+import weka.core.Instance;
 import weka.core.Instances;
 
 public class WekaInstancesDataSet extends AbstractDataSet implements Serializable
@@ -16,6 +18,7 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	Instances inst;
 	String key;
 	int positiveClass;
+	List<String> endpoints;
 
 	public WekaInstancesDataSet(Instances inst, int positiveClass)
 	{
@@ -52,6 +55,18 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	public int getSize()
 	{
 		return inst.numInstances();
+	}
+
+	@Override
+	public List<String> getEndpoints()
+	{
+		if (endpoints == null)
+		{
+			endpoints = new ArrayList<>();
+			for (Instance instance : inst)
+				endpoints.add(instance.stringValue(inst.classAttribute()));
+		}
+		return endpoints;
 	}
 
 	@Override

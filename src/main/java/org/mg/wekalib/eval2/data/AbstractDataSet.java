@@ -5,15 +5,15 @@ import org.mg.wekalib.eval2.job.DefaultComposedKeyProvider;
 public abstract class AbstractDataSet extends DefaultComposedKeyProvider implements DataSet
 {
 	@Override
-	public DataSet getTrainFold(int numFolds, long randomSeed, int fold)
+	public DataSet getTrainFold(int numFolds, boolean stratified, long randomSeed, int fold)
 	{
-		return new FoldDataSet(this, numFolds, randomSeed, fold, true);
+		return new FoldDataSet(this, numFolds, stratified, randomSeed, fold, true);
 	}
 
 	@Override
-	public DataSet getTestFold(int numFolds, long randomSeed, int fold)
+	public DataSet getTestFold(int numFolds, boolean stratified, long randomSeed, int fold)
 	{
-		return new FoldDataSet(this, numFolds, randomSeed, fold, false);
+		return new FoldDataSet(this, numFolds, stratified, randomSeed, fold, false);
 	}
 
 	@Override

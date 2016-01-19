@@ -3,6 +3,7 @@ package org.mg.wekalib.attribute_ranking;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +29,8 @@ public class PredictionAttributeComputation
 	}
 
 	public static List<PredictionAttribute> compute(Classifier classifier, Instance instance,
-			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction)
-					throws Exception
+			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction,
+			HashMap<Integer, Set<Integer>> attributesToSwitch) throws Exception
 	{
 
 		int predictionIndex = ArrayUtil.getMaxIndex(distributionForInstance);
@@ -46,7 +47,12 @@ public class PredictionAttributeComputation
 			Instances dCopy = new Instances(instance.dataset());
 			Instance copy = new DenseInstance(instance);
 			copy.setDataset(dCopy);
-			copy.setValue(a, instance.stringValue(att).equals("0") ? "1" : "0");
+
+			String newVal = instance.stringValue(att).equals("0") ? "1" : "0";
+			copy.setValue(a, newVal);
+			if (attributesToSwitch != null)
+				for (Integer otherA : attributesToSwitch.get(a))
+					copy.setValue(otherA, newVal);
 
 			double[] newDistri = classifier.distributionForInstance(copy);
 			if (distributionForInstance.length != 2)

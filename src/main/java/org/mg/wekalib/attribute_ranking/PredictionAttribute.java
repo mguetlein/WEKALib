@@ -21,7 +21,8 @@ public class PredictionAttribute implements Serializable
 	{
 	}
 
-	public PredictionAttribute(int attribute, double[] alternativeDistributionForInstance, double diffToOrigProp)
+	public PredictionAttribute(int attribute, double[] alternativeDistributionForInstance,
+			double diffToOrigProp)
 	{
 		this.attribute = attribute;
 		this.alternativeDistributionForInstance = alternativeDistributionForInstance;
@@ -59,8 +60,9 @@ public class PredictionAttribute implements Serializable
 		b.append(PredictionAttribute.class.getSimpleName() + "\n");
 		b.append("attribute-index: " + attribute + "\n");
 		b.append("alternate-prediction-idx: " + alternativePredictionIdx + "\n");
-		b.append("alternate-prediction: " + ArrayUtil.toString(alternativeDistributionForInstance) + "\n");
-		b.append("diff-to-orig: " + diffToOrigProp);
+		b.append("alternate-prediction: " + ArrayUtil.toString(alternativeDistributionForInstance)
+				+ "\n");
+		b.append("diff-to-orig: " + diffToOrigProp + "\n");
 		return b.toString();
 	}
 }

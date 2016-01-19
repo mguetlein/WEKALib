@@ -2,6 +2,7 @@ package org.mg.wekalib.evaluation;
 
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -90,27 +91,9 @@ public class PredictionUtilTest
 					.values())
 			{
 				Double val = PredictionUtil.getClassificationMeasure(p, m, positveClass);
-				//				System.out.println(m + " " + val);
-				switch (m)
-				{
-					case accuracy:
-						Assert.assertEquals(val, eval.pctCorrect() / 100.0, delta);
-						break;
-					case AUC:
-						Assert.assertEquals(val, eval.areaUnderROC((int) positveClass), delta);
-						break;
-					case AUPRC:
-						Assert.assertEquals(val, eval.areaUnderPRC((int) positveClass), delta);
-						break;
-					case sensitivity:
-						Assert.assertEquals(val, eval.truePositiveRate((int) positveClass), delta);
-						break;
-					case specificity:
-						Assert.assertEquals(val, eval.trueNegativeRate((int) positveClass), delta);
-						break;
-					default:
-						throw new IllegalStateException("add test for " + m);
-				}
+				Double val2 = PredictionUtil.getClassificationMeasureInWeka(eval, m, positveClass);
+				//System.out.println(m + " " + val + " +" + val2);
+				Assert.assertEquals(val, val2, delta);
 			}
 		}
 	}
@@ -120,28 +103,54 @@ public class PredictionUtilTest
 	{
 		try
 		{
-			long seed = -483616214247688869L; //new Random().nextLong();
-			//System.err.println(seed);
+			HashMap<PredictionUtil.ClassificationMeasure, Double> valP = new HashMap<>();
+			HashMap<PredictionUtil.ClassificationMeasure, Double> valE = new HashMap<>();
+			int run = 0;
+			double maxDiff = 0;
 
-			CV cv = new CV();
-			cv.setRandomSeed(seed);
-			Instances inst = new Instances(new FileReader(
-					System.getProperty("user.home") + "/data/weka/nominal/sonar.arff"));
-			inst.setClassIndex(inst.numAttributes() - 1);
-			cv.setDataSet(new WekaInstancesDataSet(inst, 1));
-			cv.setModel(new RandomForestModel());
-			cv.runSequentially();
-			Predictions p = cv.getResult();
+			// run repeated CVs on the same data until the max difference
+			// between CV() and Weka-CV
+			// in mean statistics for each value is below 0.005
+			do
+			{
+				CV cv = new CV();
+				cv.setRandomSeed(run);
+				cv.setStratified(true);
+				Instances inst = new Instances(new FileReader(
+						System.getProperty("user.home") + "/data/weka/nominal/sonar.arff"));
+				inst.setClassIndex(inst.numAttributes() - 1);
+				cv.setDataSet(new WekaInstancesDataSet(inst, 1));
+				cv.setModel(new RandomForestModel());
+				cv.runSequentially();
+				Predictions p = cv.getResult();
+				for (PredictionUtil.ClassificationMeasure m : PredictionUtil.ClassificationMeasure
+						.values())
+				{
+					double v = valP.containsKey(m) ? valP.get(m) : 0;
+					double v2 = PredictionUtil.getClassificationMeasure(p, m, 1.0);
+					valP.put(m, (v * run + v2) / (run + 1));
+				}
 
-			Evaluation eval = new Evaluation(inst);
-			RandomForest rf = new RandomForest();
-			eval.crossValidateModel(rf, inst, 10, new Random(seed), new Object[0]);
+				Evaluation eval = new Evaluation(inst);
+				RandomForest rf = new RandomForest();
+				eval.crossValidateModel(rf, inst, 10, new Random(run), new Object[0]);
+				Assert.assertEquals(p.actual.length, (int) eval.numInstances());
+				for (PredictionUtil.ClassificationMeasure m : PredictionUtil.ClassificationMeasure
+						.values())
+				{
+					double v = valE.containsKey(m) ? valE.get(m) : 0;
+					double v2 = PredictionUtil.getClassificationMeasureInWeka(eval, m, 1.0);
+					valE.put(m, (v * run + v2) / (run + 1));
+				}
 
-			Assert.assertEquals(p.actual.length, (int) eval.numInstances());
-			Assert.assertEquals(eval.areaUnderROC(0), eval.areaUnderROC(1), DELTA_EQ);
-			Assert.assertNotEquals(eval.areaUnderPRC(0), eval.areaUnderPRC(1), DELTA_EQ);
-
-			equal(p, eval, 0.04);
+				maxDiff = 0;
+				for (PredictionUtil.ClassificationMeasure m : PredictionUtil.ClassificationMeasure
+						.values())
+					maxDiff = Math.max(Math.abs(valP.get(m) - valE.get(m)), maxDiff);
+				run++;
+				System.out.println(run + " " + maxDiff);
+			}
+			while (maxDiff > 0.005);
 
 			System.out.println("CVs stats about equal");
 		}

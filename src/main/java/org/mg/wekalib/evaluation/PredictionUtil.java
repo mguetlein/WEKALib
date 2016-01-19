@@ -13,6 +13,7 @@ import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
 
+import weka.classifiers.Evaluation;
 import weka.classifiers.evaluation.NominalPrediction;
 import weka.classifiers.evaluation.Prediction;
 import weka.classifiers.evaluation.ThresholdCurve;
@@ -749,6 +750,26 @@ public class PredictionUtil
 				return sensitivity(p, positiveClassValue);
 			case specificity:
 				return specificity(p, positiveClassValue);
+			default:
+				throw new IllegalArgumentException();
+		}
+	}
+
+	public static double getClassificationMeasureInWeka(Evaluation eval, ClassificationMeasure m,
+			double positiveClassValue)
+	{
+		switch (m)
+		{
+			case accuracy:
+				return eval.pctCorrect() / 100.0;
+			case AUC:
+				return eval.areaUnderROC((int) positiveClassValue);
+			case AUPRC:
+				return eval.areaUnderPRC((int) positiveClassValue);
+			case sensitivity:
+				return eval.truePositiveRate((int) positiveClassValue);
+			case specificity:
+				return eval.trueNegativeRate((int) positiveClassValue);
 			default:
 				throw new IllegalArgumentException();
 		}

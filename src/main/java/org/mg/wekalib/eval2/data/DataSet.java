@@ -9,9 +9,9 @@ import weka.core.Instances;
 
 public interface DataSet extends KeyProvider, ComposedKeyProvider
 {
-	public DataSet getTrainFold(int numFolds, long randomSeed, int fold);
+	public DataSet getTrainFold(int numFolds, boolean stratified, long randomSeed, int fold);
 
-	public DataSet getTestFold(int numFolds, long randomSeed, int fold);
+	public DataSet getTestFold(int numFolds, boolean stratified, long randomSeed, int fold);
 
 	public Instances getWekaInstances();
 
@@ -22,4 +22,6 @@ public interface DataSet extends KeyProvider, ComposedKeyProvider
 	public int getSize();
 
 	public String getName();
+
+	public List<String> getEndpoints();
 }

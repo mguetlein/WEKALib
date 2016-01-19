@@ -48,7 +48,7 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 					feat.nextJob());
 		else
 		{
-			final Model mod = (Model) model.cloneJob();
+			Model mod = (Model) model.cloneJob();
 			DataSet res[] = feat.getResult();
 			mod.setTrainingDataset(res[0]);
 			mod.setTestDataset(res[1]);

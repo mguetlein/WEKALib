@@ -21,6 +21,7 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	Model model;
 	int numFolds = 10;
 	long randomSeed = 1;
+	boolean stratified = false;
 
 	public CV cloneJob()
 	{
@@ -29,14 +30,15 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 		cv.setModel(model);
 		cv.setNumFolds(numFolds);
 		cv.setRandomSeed(randomSeed);
+		cv.setStratified(stratified);
 		return cv;
 	}
 
 	private Model getModel(int fold)
 	{
 		Model m = (Model) model.cloneJob();
-		m.setTrainingDataset(dataSet.getTrainFold(numFolds, randomSeed, fold));
-		m.setTestDataset(dataSet.getTestFold(numFolds, randomSeed, fold));
+		m.setTrainingDataset(dataSet.getTrainFold(numFolds, stratified, randomSeed, fold));
+		m.setTestDataset(dataSet.getTestFold(numFolds, stratified, randomSeed, fold));
 		return m;
 	}
 
@@ -49,7 +51,10 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	@Override
 	public String getKeyPrefix()
 	{
-		return "CV-numFolds" + numFolds + "-seed" + randomSeed + File.separator
+		String strat = "";
+		if (stratified)
+			strat = "-strat";
+		return "CV-numFolds" + numFolds + "-seed" + randomSeed + strat + File.separator
 				+ model.getKeyPrefix()
 				+ (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
 	}
@@ -57,7 +62,11 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(dataSet, model, numFolds, randomSeed);
+		// for retain old keys, use stratified in key only if enabled
+		if (stratified)
+			return getKeyContent(dataSet, model, numFolds, randomSeed, stratified);
+		else
+			return getKeyContent(dataSet, model, numFolds, randomSeed);
 	}
 
 	@Override
@@ -137,6 +146,11 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	public void setNumFolds(int numFolds)
 	{
 		this.numFolds = numFolds;
+	}
+
+	public void setStratified(boolean stratified)
+	{
+		this.stratified = stratified;
 	}
 
 	public static void main(String[] args) throws Exception
