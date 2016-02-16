@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
+import org.mg.javalib.util.ArrayUtil;
 
 import weka.core.Instances;
 
@@ -28,6 +29,10 @@ public class ArffWriter
 		writeToArff(new FileWriter(file), data);
 	}
 
+	/**
+	 * use {@link InstancesCreator} instead
+	 */
+	@Deprecated
 	public static Instances toInstances(ArffWritable data) throws Exception
 	{
 		ByteArrayOutputStream out = null;
@@ -69,7 +74,8 @@ public class ArffWriter
 		}
 		LineWriter out = new LineWriter();
 
-		out.println("% generated: " + new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date()));
+		out.println(
+				"% generated: " + new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date()));
 
 		if (data.getAdditionalInfo() != null)
 			for (String info : data.getAdditionalInfo())
@@ -83,10 +89,17 @@ public class ArffWriter
 
 		for (int i = 0; i < data.getNumAttributes(); i++)
 		{
-			out.println("@attribute \"" + data.getAttributeName(i) + "\" " + data.getAttributeValueSpace(i));
-
-			if (!numeric)
-				numeric = data.getAttributeValueSpace(i).equalsIgnoreCase("numeric");
+			String domain[] = data.getAttributeDomain(i);
+			if (domain == null)
+			{
+				out.println("@attribute \"" + data.getAttributeName(i) + "\" numeric");
+				numeric = true;
+			}
+			else
+			{
+				out.println("@attribute \"" + data.getAttributeName(i) + "\" "
+						+ ArrayUtil.toString(domain, ",", "{", "}", ""));
+			}
 		}
 		out.println();
 
@@ -97,7 +110,8 @@ public class ArffWriter
 		if (sparse)
 		{
 			if (numeric)
-				throw new Error("numeric and sparse is not supported, missing values must explicity represented as ?");
+				throw new Error(
+						"numeric and sparse is not supported, missing values must explicity represented as ?");
 
 			for (int i = 0; i < data.getNumInstances(); i++)
 			{
