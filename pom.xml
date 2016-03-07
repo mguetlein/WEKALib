@@ -85,6 +85,11 @@
 	<version>1.0.0</version>
 </dependency>
     
+        <dependency>
+	<groupId>org.asad.virtualscreening</groupId>
+	<artifactId>VirtualScreening</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+</dependency>
 
     </dependencies>  
   

@@ -271,7 +271,7 @@ public class CondDensTest
 				//				Predictions pTop = eval.getCvPredictions();
 				//				pTop = PredictionUtil.stripActualNaN(pTop);
 
-				Predictions pTop = PredictionUtil.topConf(p, 0.3);
+				Predictions pTop = PredictionUtil.topConfAllClasses(p, 0.3);
 				r2 = PredictionUtil.rmse(pTop);
 				c2 = PredictionUtil.pearson(pTop);
 

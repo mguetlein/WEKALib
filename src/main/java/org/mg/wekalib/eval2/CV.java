@@ -3,10 +3,7 @@ package org.mg.wekalib.eval2;
 import java.io.File;
 import java.io.FileReader;
 
-import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.data.WekaInstancesDataSet;
-import org.mg.wekalib.eval2.job.DataSetJobOwner;
-import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.eval2.job.Printer;
 import org.mg.wekalib.eval2.model.Model;
 import org.mg.wekalib.eval2.model.RandomForestModel;
@@ -15,13 +12,9 @@ import org.mg.wekalib.evaluation.Predictions;
 
 import weka.core.Instances;
 
-public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<Predictions>
+public class CV extends Validation
 {
-	DataSet dataSet;
-	Model model;
 	int numFolds = 10;
-	long randomSeed = 1;
-	boolean stratified = false;
 
 	public CV cloneJob()
 	{
@@ -51,12 +44,12 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 	@Override
 	public String getKeyPrefix()
 	{
-		String strat = "";
-		if (stratified)
-			strat = "-strat";
-		return "CV-numFolds" + numFolds + "-seed" + randomSeed + strat + File.separator
-				+ model.getKeyPrefix()
-				+ (dataSet != null ? (File.separator + dataSet.getKeyPrefix()) : "");
+		String prefix = "";
+		if (dataSet != null)
+			prefix += dataSet.getKeyPrefix() + File.separator;
+		prefix += "CV-numFolds" + numFolds + "-seed" + randomSeed + "-strat" + stratified;
+		prefix += File.separator + model.getKeyPrefix();
+		return prefix;
 	}
 
 	@Override
@@ -117,40 +110,9 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 		setResult(pred);
 	}
 
-	public Model getModel()
-	{
-		return model;
-	}
-
-	public void setModel(Model mod)
-	{
-		model = mod;
-	}
-
-	@Override
-	public void setDataSet(DataSet data)
-	{
-		dataSet = data;
-	}
-
-	public long getRandomSeed()
-	{
-		return randomSeed;
-	}
-
-	public void setRandomSeed(long r)
-	{
-		randomSeed = r;
-	}
-
 	public void setNumFolds(int numFolds)
 	{
 		this.numFolds = numFolds;
-	}
-
-	public void setStratified(boolean stratified)
-	{
-		this.stratified = stratified;
 	}
 
 	public static void main(String[] args) throws Exception
@@ -166,8 +128,4 @@ public class CV extends DefaultJobOwner<Predictions> implements DataSetJobOwner<
 
 	}
 
-	public DataSet getDataset()
-	{
-		return dataSet;
-	}
 }

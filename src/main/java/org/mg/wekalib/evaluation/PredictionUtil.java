@@ -2,13 +2,17 @@ package org.mg.wekalib.evaluation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.util.FastMath;
+import org.asad.virtualscreening.enrichvs.EnrichmentAssessment;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
@@ -618,25 +622,77 @@ public class PredictionUtil
 		return ArrayUtil.toPrimitiveDoubleArray(pPerFold);
 	}
 
-	private static Instances thresholdCurveInstances(Predictions preds, double positiveClassValue)
+	public static void printPredictionsWithWEKAProbability(Predictions preds,
+			double positiveClassValue)
 	{
+		thresholdCurveInstances(preds, positiveClassValue, true);
+	}
+
+	protected static Instances thresholdCurveInstances(Predictions preds,
+			final double positiveClassValue)
+	{
+		return thresholdCurveInstances(preds, positiveClassValue, false);
+	}
+
+	protected static Instances thresholdCurveInstances(Predictions preds,
+			final double positiveClassValue, boolean print)
+	{
+		double probs[] = getProbabilitiesToBePositive(preds, positiveClassValue);
+
 		ArrayList<Prediction> l = new ArrayList<>();
 		for (int i = 0; i < preds.actual.length; i++)
 		{
-			double p[] = new double[2];
-			double prob = 0.5 + 0.5 * preds.confidence[i];
-			if (preds.predicted[i] != 0.0)
-			{
-				p[1] = prob;
-				p[0] = 1 - prob;
-			}
+			double dist[];
+			if (positiveClassValue == 0.0)
+				dist = new double[] { probs[i], 1 - probs[i] };
+			else if (positiveClassValue == 1.0)
+				dist = new double[] { 1 - probs[i], probs[i] };
 			else
-			{
-				p[0] = prob;
-				p[1] = 1 - prob;
-			}
-			l.add(new NominalPrediction(preds.actual[i], p));
+				throw new IllegalStateException();
+			l.add(new NominalPrediction(preds.actual[i], dist));
 		}
+
+		if (print)
+		{
+			ArrayList<Prediction> sort = new ArrayList<Prediction>(l);
+			Collections.sort(sort, new Comparator<Prediction>()
+			{
+				@Override
+				public int compare(Prediction o1, Prediction o2)
+				{
+					NominalPrediction n1 = (NominalPrediction) o1;
+					NominalPrediction n2 = (NominalPrediction) o2;
+					return Double.valueOf(n2.distribution()[(int) positiveClassValue])
+							.compareTo(n1.distribution()[(int) positiveClassValue]);
+				}
+			});
+
+			StringBuffer idx = new StringBuffer();
+			StringBuffer conf = new StringBuffer();
+			StringBuffer act = new StringBuffer();
+			StringBuffer pred = new StringBuffer();
+			int i = 0;
+			double oldConf = -1;
+			for (Prediction prediction : sort)
+			{
+				NominalPrediction n = (NominalPrediction) prediction;
+				idx.append(String.format("%-5d", i));
+				double newConf = n.distribution()[(int) positiveClassValue];
+				conf.append(newConf != oldConf ? String.format("%-5.2f", newConf) : "     ");
+				oldConf = newConf;
+				act.append(String.format("%-5s", (n.actual() == positiveClassValue ? "x" : "-")));
+				pred.append(
+						String.format("%-5s", (n.predicted() == positiveClassValue ? "x" : "-")));
+				i++;
+			}
+			System.out.println();
+			System.out.println("idx:      " + idx);
+			System.out.println("prob:     " + conf);
+			System.out.println("act-pos:  " + act);
+			System.out.println("pred-pos: " + pred);
+			System.out.println();
+		}
+
 		ThresholdCurve tc = new ThresholdCurve();
 		Instances inst = tc.getCurve(l, (int) positiveClassValue);
 		//		System.out.println(inst);
@@ -711,9 +767,42 @@ public class PredictionUtil
 		return correct / total;
 	}
 
+	public static double enrichmentFactor(Predictions p, double percent, double positiveClassValue)
+	{
+		int allTotal = 0;
+		int allClass = 0;
+		for (int i = 0; i < p.actual.length; i++)
+		{
+			if (p.actual[i] == positiveClassValue)
+				allClass++;
+			allTotal++;
+		}
+
+		int topTotal = 0;
+		int topClass = 0;
+		Predictions top = topConfPositive(p, percent, positiveClassValue);
+		//		System.err.println("X based on " + p.actual.length + " " + percent + " "
+		//				+ (p.actual.length * percent));
+		//		System.err.println("X based on " + top.actual.length);
+		for (int i = 0; i < top.actual.length; i++)
+		{
+			if (top.actual[i] == positiveClassValue)
+				topClass++;
+			topTotal++;
+		}
+
+		double allRatio = allClass / (double) allTotal;
+		double erRatio = topClass / (double) topTotal;
+		return erRatio / allRatio;
+	}
+
 	public enum ClassificationMeasure
 	{
-		accuracy, AUC, AUPRC, sensitivity, specificity;
+		Accuracy, AUC, AUPRC, Sensitivity, Specificity, EnrichmentFactor5, EnrichmentFactor20,
+		BEDROC20, BEDROC100;
+
+		public static ClassificationMeasure[] SELECTION = { Accuracy, AUC, AUPRC, Sensitivity,
+				Specificity };
 
 		public String shortName()
 		{
@@ -723,16 +812,25 @@ public class PredictionUtil
 					return "AUC";
 				case AUPRC:
 					return "AUPRC";
-				case accuracy:
+				case Accuracy:
 					return "Accur";
-				case sensitivity:
+				case Sensitivity:
 					return "Sensi";
-				case specificity:
+				case Specificity:
 					return "Speci";
+				case BEDROC20:
+					return "BEDROC20";
+				case BEDROC100:
+					return "BEDROC100";
+				case EnrichmentFactor5:
+					return "EF5";
+				case EnrichmentFactor20:
+					return "EF20";
 				default:
 					throw new IllegalArgumentException();
 			}
 		}
+
 	}
 
 	public static double getClassificationMeasure(Predictions p, ClassificationMeasure m,
@@ -744,12 +842,20 @@ public class PredictionUtil
 				return AUC(p);
 			case AUPRC:
 				return AUPRC(p, positiveClassValue);
-			case accuracy:
+			case Accuracy:
 				return accuracy(p);
-			case sensitivity:
+			case Sensitivity:
 				return sensitivity(p, positiveClassValue);
-			case specificity:
+			case Specificity:
 				return specificity(p, positiveClassValue);
+			case EnrichmentFactor5:
+				return enrichmentFactor(p, 0.05, positiveClassValue);
+			case EnrichmentFactor20:
+				return enrichmentFactor(p, 0.05, positiveClassValue);
+			case BEDROC20:
+				return toEnrichmentAssessment(p, positiveClassValue).bedroc(0.2, true);
+			case BEDROC100:
+				return toEnrichmentAssessment(p, positiveClassValue).bedroc(1, true);
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -760,49 +866,70 @@ public class PredictionUtil
 	{
 		switch (m)
 		{
-			case accuracy:
+			case Accuracy:
 				return eval.pctCorrect() / 100.0;
 			case AUC:
 				return eval.areaUnderROC((int) positiveClassValue);
 			case AUPRC:
 				return eval.areaUnderPRC((int) positiveClassValue);
-			case sensitivity:
+			case Sensitivity:
 				return eval.truePositiveRate((int) positiveClassValue);
-			case specificity:
+			case Specificity:
 				return eval.trueNegativeRate((int) positiveClassValue);
 			default:
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(m + " does not exist in weka");
 		}
 	}
 
-	public static Predictions topConf(Predictions pred, double d)
+	public static double[] getProbabilitiesToBePositive(Predictions p, double positiveClassValue)
+	{
+		double probs[] = new double[p.actual.length];
+		for (int i = 0; i < p.confidence.length; i++)
+		{
+			double prob = 0.5 + 0.5 * p.confidence[i];
+			if (p.predicted[i] == positiveClassValue)
+				probs[i] = prob;
+			else
+				probs[i] = 1 - prob;
+		}
+		return probs;
+	}
+
+	public static Predictions topConfPositive(Predictions p, double d, double positiveClassValue)
+	{
+		double probs[] = getProbabilitiesToBePositive(p, positiveClassValue);
+		int scoreOrder[] = ArrayUtil.getOrdering(probs, false);
+		return topFromOrdering(p, d, scoreOrder);
+	}
+
+	public static Predictions topConfAllClasses(Predictions pred, double d)
+	{
+		int confOrder[] = ArrayUtil.getOrdering(pred.confidence, false);
+		return topFromOrdering(pred, d, confOrder);
+	}
+
+	private static Predictions topFromOrdering(Predictions pred, double d, int ordering[])
 	{
 		int size = (int) (pred.predicted.length * d);
-
 		Predictions p = new Predictions();
 		p.actual = new double[size];
 		p.predicted = new double[size];
 		p.confidence = new double[size];
 		p.fold = new int[size];
 		p.origIndex = new int[size];
-
-		int confOrder[] = ArrayUtil.getOrdering(pred.confidence, false);
-
 		for (int i = 0; i < size; i++)
 		{
-			int j = confOrder[i];
+			int j = ordering[i];
 			p.actual[i] = pred.actual[j];
 			p.predicted[i] = pred.predicted[j];
 			p.confidence[i] = pred.confidence[j];
 			p.fold[i] = pred.fold[j];
 			p.origIndex[i] = pred.origIndex[j];
 		}
-
 		//		System.out.println("conf before:");
 		//		System.out.println(DoubleArraySummary.create(pred.confidence).toStringSummary());
 		//		System.out.println("conf after:");
 		//		System.out.println(DoubleArraySummary.create(p.confidence).toStringSummary());
-
 		return p;
 	}
 
@@ -813,6 +940,75 @@ public class PredictionUtil
 			if (!Double.isNaN(p.actual[i]))
 				add(p2, p, i);
 		return p2;
+	}
+
+	/**
+	 * @param s e.g. "1101101000100000100", 1=postive instance, 0 negative instance, sorted by prob
+	 * @return
+	 */
+	public static Predictions fromBitString(String s)
+	{
+		String clazzes[] = ArrayUtil.toStringArray(ArrayUtils.toObject(s.toCharArray()));
+		Predictions p = new Predictions();
+		p.confidence = new double[clazzes.length];
+		p.actual = new double[clazzes.length];
+		p.predicted = new double[clazzes.length];
+		p.fold = new int[clazzes.length];
+		p.origIndex = new int[clazzes.length];
+		double step = 1 / (double) (clazzes.length - 1);
+		for (int i = 0; i < clazzes.length; i++)
+		{
+			p.confidence[i] = 1 - (i * step);
+			p.actual[i] = clazzes[i].equals("1") ? 1.0 : 0.0;
+			// predict all as active
+			// otherwise the confidence has to computed more complicated:
+			// it would have to go up when "moving to the right" of the bit-string
+			p.predicted[i] = 1.0;
+			p.fold[i] = -1;
+			p.origIndex[i] = -1;
+		}
+		return p;
+	}
+
+	public static EnrichmentAssessment toEnrichmentAssessment(Predictions p,
+			double positiveClassValue)
+	{
+		double probs[] = getProbabilitiesToBePositive(p, positiveClassValue);
+		boolean labels[] = new boolean[p.actual.length];
+		for (int i = 0; i < labels.length; i++)
+			labels[i] = p.actual[i] == positiveClassValue;
+
+		int ordering[] = ArrayUtil.getOrdering(probs, false);
+		probs = ArrayUtil.sortAccordingToOrdering(ordering, probs);
+		labels = ArrayUtil.sortAccordingToOrdering(ordering, labels);
+
+		//		System.err.print("x <- c(");
+		//		int i = 0;
+		//		for (double prob : probs)
+		//		{
+		//			if (i > 0)
+		//				System.err.print(",");
+		//			if (i > 0 && i % 20 == 0)
+		//				System.err.println();
+		//			System.err.print(StringUtil.formatDouble(prob));
+		//			i++;
+		//		}
+		//		System.err.println(")");
+		//		System.err.print("y <- c(");
+		//		i = 0;
+		//		for (boolean b : labels)
+		//		{
+		//			if (i > 0)
+		//				System.err.print(",");
+		//			if (i > 0 && i % 20 == 0)
+		//				System.err.println();
+		//			System.err.print(b ? "1" : "0");
+		//			i++;
+		//		}
+		//		System.err.println(")");
+		//		System.exit(1);
+
+		return new EnrichmentAssessment(probs, labels);
 	}
 
 	public static String summaryClassification(Predictions p)

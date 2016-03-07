@@ -8,10 +8,7 @@ import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
 import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.SMO;
 import weka.core.Instances;
-import weka.filters.Filter;
-import weka.filters.unsupervised.instance.NonSparseToSparse;
 
 public abstract class AbstractModel extends DefaultJobOwner<Predictions> implements Model
 {
@@ -44,8 +41,11 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	@Override
 	public String getKeyPrefix()
 	{
-		return getWekaClassifer().getClass().getSimpleName()
-				+ (train != null ? (File.separator + train.getName()) : "");
+		String prefix = "";
+		if (train != null)
+			prefix += train.getKeyPrefix() + File.separator;
+		prefix += getWekaClassifer().getClass().getSimpleName();
+		return prefix;
 	}
 
 	@Override
@@ -73,20 +73,17 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 			Classifier classifier = getWekaClassifer();
 			Instances trainI = train.getWekaInstances();
 			Instances testI = test.getWekaInstances();
-			if (classifier instanceof SMO)
-			{
-				//				System.err.print("filtering..");
-				NonSparseToSparse filter = new NonSparseToSparse();
-				filter.setInputFormat(trainI);
-				trainI = Filter.useFilter(trainI, filter);
-				testI = Filter.useFilter(testI, filter);
-				//				System.err.println("..done");
-			}
+
 			classifier.buildClassifier(trainI);
+
 			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(trainI);
 			eval.evaluateModel(classifier, testI);
+
 			Predictions p = eval.getCvPredictions();
-			//			System.err.println(PredictionUtil.summaryClassification(p));
+
+			// System.err.println(PredictionUtil.summaryClassification(p));
+			// PredictionUtil.printPredictionsWithConfidence(p, train.getPositiveClass());
+
 			setResult(p);
 		}
 		catch (Exception e)
@@ -119,6 +116,12 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	public DataSet getTrainingDataset()
 	{
 		return train;
+	}
+
+	@Override
+	public boolean isValid(DataSet dataSet)
+	{
+		return true;
 	}
 
 }

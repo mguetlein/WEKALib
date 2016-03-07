@@ -13,6 +13,7 @@ public class SupportVectorMachineModel extends AbstractModel
 	private double gamma = 0.01;
 	private double exp = 1;
 	private boolean buildLogisticModels = true;
+	private double ridge = 1e-1;
 
 	@Override
 	public Classifier getWekaClassifer()
@@ -22,6 +23,7 @@ public class SupportVectorMachineModel extends AbstractModel
 			SMO smo = new SMO();
 			smo.setC(c);
 			smo.setBuildLogisticModels(buildLogisticModels);
+			smo.setRidge(ridge);
 			Kernel kernel = this.kernel.getClass().newInstance();
 			if (kernel instanceof PolyKernel)
 				((PolyKernel) kernel).setExponent(exp);
@@ -40,7 +42,8 @@ public class SupportVectorMachineModel extends AbstractModel
 	public String getName()
 	{
 		StringBuffer b = new StringBuffer();
-		b.append("SMV c" + c + " l" + buildLogisticModels + " ");
+		b.append("SVM c" + c + " l" + buildLogisticModels + " ");
+		b.append("r" + ridge + " ");
 		if (kernel instanceof PolyKernel)
 			b.append("poly e" + exp);
 		else if (kernel instanceof RBFKernel)
@@ -74,6 +77,11 @@ public class SupportVectorMachineModel extends AbstractModel
 		this.buildLogisticModels = buildLogisticModels;
 	}
 
+	public void setRidge(double ridge)
+	{
+		this.ridge = ridge;
+	}
+
 	@Override
 	protected void cloneParams(Model clonedModel)
 	{
@@ -83,6 +91,7 @@ public class SupportVectorMachineModel extends AbstractModel
 		m.setGamma(gamma);
 		m.setExp(exp);
 		m.setKernel(kernel);
+		m.setRidge(ridge);
 	}
 
 	@Override
@@ -98,13 +107,15 @@ public class SupportVectorMachineModel extends AbstractModel
 		b.append(exp);
 		b.append('#');
 		b.append(buildLogisticModels);
+		b.append('#');
+		b.append(ridge);
 		return b.toString();
 	}
 
 	@Override
 	public String getAlgorithmShortName()
 	{
-		return "SMV";
+		return "SVM";
 	}
 
 	@Override
@@ -132,5 +143,4 @@ public class SupportVectorMachineModel extends AbstractModel
 	{
 		return false;
 	}
-
 }

@@ -20,5 +20,7 @@ public interface Model extends JobOwner<Predictions> //, Serializable
 
 	public String getAlgorithmParamsNice();
 
+	public boolean isValid(DataSet dataSet);
+
 	//	public FeatureProvider getFeatureProvider();
 }

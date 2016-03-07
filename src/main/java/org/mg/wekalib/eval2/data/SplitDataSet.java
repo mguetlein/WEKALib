@@ -11,26 +11,24 @@ import org.mg.wekalib.eval2.job.Printer;
 
 import weka.core.Instances;
 
-public class FoldDataSet extends AbstractDataSet implements WrappedDataSet
+public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 {
 	protected DataSet parent;
-	protected int numFolds;
+	protected double splitRatio;
 	protected boolean stratified;
 	protected long randomSeed;
-	protected int fold;
 	protected boolean train;
 
 	private DataSet self;
 	private Instances instances;
 
-	public FoldDataSet(DataSet parent, int numFolds, boolean stratified, long randomSeed, int fold,
+	public SplitDataSet(DataSet parent, double splitRatio, boolean stratified, long randomSeed,
 			boolean train)
 	{
 		this.parent = parent;
-		this.numFolds = numFolds;
+		this.splitRatio = splitRatio;
 		this.stratified = stratified;
 		this.randomSeed = randomSeed;
-		this.fold = fold;
 		this.train = train;
 	}
 
@@ -43,12 +41,12 @@ public class FoldDataSet extends AbstractDataSet implements WrappedDataSet
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(parent, numFolds, randomSeed, fold, train, stratified);
+		return getKeyContent(parent, splitRatio, randomSeed, train, stratified);
 	}
 
-	public int getFold()
+	public double getSplitRatio()
 	{
-		return fold;
+		return splitRatio;
 	}
 
 	@Override
@@ -73,9 +71,9 @@ public class FoldDataSet extends AbstractDataSet implements WrappedDataSet
 	{
 		if (self == null)
 		{
-			Printer.println("FoldDataset: creating " + (train ? "train" : "test") + " fold "
-					+ (fold + 1) + "/" + numFolds + ", seed " + randomSeed + ", stratified "
-					+ stratified);
+			Printer.println(
+					"SplitDataset: creating " + (train ? "train" : "test") + " split, ratio "
+							+ splitRatio + ", seed " + randomSeed + ", stratified " + stratified);
 			List<Integer> selfIdx = new ArrayList<>();
 			if (stratified)
 			{
@@ -88,25 +86,34 @@ public class FoldDataSet extends AbstractDataSet implements WrappedDataSet
 						clazzIndices.put(clazz, new ArrayList<Integer>());
 					clazzIndices.get(clazz).add(i++);
 				}
+				int prevSize = 0;
+				String s = "";
 				for (String clazz : clazzIndices.keySet())
 				{
 					Integer[] idx = ArrayUtil.toIntegerArray(clazzIndices.get(clazz));
 					ArrayUtil.scramble(idx, r);
-					List<Integer[]> cvIdx = ArrayUtil.split(idx, numFolds);
-					for (int f = 0; f < cvIdx.size(); f++)
-						if ((train && fold != f) || (!train && fold == f))
-							selfIdx.addAll(ArrayUtil.toList(cvIdx.get(f)));
+					if (train)
+						for (int j = 0; j < (int) (idx.length * splitRatio); j++)
+							selfIdx.add(idx[j]);
+					else
+						for (int j = (int) (idx.length * splitRatio); j < idx.length; j++)
+							selfIdx.add(idx[j]);
+					s += (selfIdx.size() - prevSize) + " x " + clazz + " ";
+					prevSize = selfIdx.size();
 				}
-				ListUtil.scramble(selfIdx, new Random(randomSeed + fold));
+				Printer.println("-> " + s);
+				ListUtil.scramble(selfIdx, new Random(randomSeed));
 			}
 			else
 			{
 				Integer[] idx = ArrayUtil.toIntegerArray(ArrayUtil.indexArray(parent.getSize()));
 				ArrayUtil.scramble(idx, new Random(randomSeed));
-				List<Integer[]> cvIdx = ArrayUtil.split(idx, numFolds);
-				for (int f = 0; f < cvIdx.size(); f++)
-					if ((train && fold != f) || (!train && fold == f))
-						selfIdx.addAll(ArrayUtil.toList(cvIdx.get(f)));
+				if (train)
+					for (int i = 0; i < (int) (idx.length * splitRatio); i++)
+						selfIdx.add(idx[i]);
+				else
+					for (int i = (int) (idx.length * splitRatio); i < idx.length; i++)
+						selfIdx.add(idx[i]);
 			}
 			self = parent.getFilteredDataset(getName(), selfIdx);
 		}

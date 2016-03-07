@@ -12,9 +12,9 @@ import org.mg.javalib.util.ArrayUtil;
 
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
-import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SparseInstance;
 
 public class PredictionAttributeComputation
 {
@@ -32,7 +32,6 @@ public class PredictionAttributeComputation
 			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction,
 			HashMap<Integer, Set<Integer>> attributesToSwitch) throws Exception
 	{
-
 		int predictionIndex = ArrayUtil.getMaxIndex(distributionForInstance);
 
 		List<PredictionAttribute> attributes = new ArrayList<PredictionAttribute>();
@@ -45,16 +44,24 @@ public class PredictionAttributeComputation
 			//			System.out.println("---");
 
 			Instances dCopy = new Instances(instance.dataset());
-			Instance copy = new DenseInstance(instance);
+			Instance copy = new SparseInstance(instance);
 			copy.setDataset(dCopy);
 
 			String newVal = instance.stringValue(att).equals("0") ? "1" : "0";
 			copy.setValue(a, newVal);
 			if (attributesToSwitch != null)
 				for (Integer otherA : attributesToSwitch.get(a))
+				{
+					//					if (copy.stringValue(otherA).equals(newVal))
+					//						System.out.println("other " + otherA + " already at " + newVal);
+					//					else
+					//						System.out.println("switching other " + otherA + " from "
+					//								+ copy.stringValue(otherA) + " to " + newVal);
 					copy.setValue(otherA, newVal);
+				}
 
 			double[] newDistri = classifier.distributionForInstance(copy);
+
 			if (distributionForInstance.length != 2)
 				throw new IllegalStateException("not binary classification");
 			if (Math.abs((1 - distributionForInstance[0]) - distributionForInstance[1]) > 0.0001)

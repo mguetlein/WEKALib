@@ -34,8 +34,8 @@ import weka.gui.visualize.ThresholdVisualizePanel;
 
 public class AUPEvaluation
 {
-	static ClassificationMeasure[] measures = new ClassificationMeasure[] { ClassificationMeasure.AUC,
-			ClassificationMeasure.AUP, ClassificationMeasure.ER5 };
+	static ClassificationMeasure[] measures = new ClassificationMeasure[] {
+			ClassificationMeasure.AUC, ClassificationMeasure.AUP, ClassificationMeasure.ER5 };
 
 	//static ClassificationMeasure[] measures = new ClassificationMeasure[] { ClassificationMeasure.AUC };
 
@@ -181,7 +181,8 @@ public class AUPEvaluation
 		eval(clazzes, predictions, ref);
 	}
 
-	public static void eval(final String[] clazzes, final List<double[]> predictions, boolean ref) throws Exception
+	public static void eval(final String[] clazzes, final List<double[]> predictions, boolean ref)
+			throws Exception
 	{
 		System.out.println(ArrayUtil.toString(clazzes));
 		for (double[] ds : predictions)
@@ -195,11 +196,11 @@ public class AUPEvaluation
 				return false;
 			}
 
-			@Override
-			public boolean isInstanceWithoutAttributeValues(int instance)
-			{
-				return false;
-			}
+			//			@Override
+			//			public boolean isInstanceWithoutAttributeValues(int instance)
+			//			{
+			//				return false;
+			//			}
 
 			@Override
 			public String getRelationName()
@@ -226,15 +227,21 @@ public class AUPEvaluation
 			}
 
 			@Override
-			public String getAttributeValueSpace(int attribute)
+			public String[] getAttributeDomain(int attribute)
 			{
-				return "{0,1}";
+				return new String[] { "0", "1" };
 			}
 
 			@Override
 			public String getAttributeValue(int instance, int attribute) throws Exception
 			{
 				return clazzes[instance];
+			}
+
+			@Override
+			public double getAttributeValueAsDouble(int instance, int attribute) throws Exception
+			{
+				return clazzes[instance].equals("1") ? 1.0 : 0.0;
 			}
 
 			@Override
@@ -350,7 +357,8 @@ public class AUPEvaluation
 						super.addPlot(newPlot);
 					}
 				};
-				vmc.setROCString("(Area under ROC = " + Utils.doubleToString(eval.areaUnderPRC(1), 4) + ")");
+				vmc.setROCString(
+						"(Area under ROC = " + Utils.doubleToString(eval.areaUnderPRC(1), 4) + ")");
 				vmc.setName("name");
 
 				//				ArrayList<Prediction> preds = eval.predictions();

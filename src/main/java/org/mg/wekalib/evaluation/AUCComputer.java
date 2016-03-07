@@ -55,7 +55,8 @@ public class AUCComputer
 	/**
 	 * probs: 2-dim array, [0] false, [1] true
 	 */
-	public static double compute(final boolean[] actual, final List<double[]> probs) throws Exception
+	public static double compute(final boolean[] actual, final List<double[]> probs)
+			throws Exception
 	{
 		Instances inst = ArffWriter.toInstances(new ArffWritable()
 		{
@@ -65,11 +66,11 @@ public class AUCComputer
 				return false;
 			}
 
-			@Override
-			public boolean isInstanceWithoutAttributeValues(int instance)
-			{
-				return false;
-			}
+			//			@Override
+			//			public boolean isInstanceWithoutAttributeValues(int instance)
+			//			{
+			//				return false;
+			//			}
 
 			@Override
 			public String getRelationName()
@@ -96,15 +97,21 @@ public class AUCComputer
 			}
 
 			@Override
-			public String getAttributeValueSpace(int attribute)
+			public String[] getAttributeDomain(int attribute)
 			{
-				return "{0,1}";
+				return new String[] { "0", "1" };
 			}
 
 			@Override
 			public String getAttributeValue(int instance, int attribute) throws Exception
 			{
 				return actual[instance] ? "1" : "0";
+			}
+
+			@Override
+			public double getAttributeValueAsDouble(int instance, int attribute) throws Exception
+			{
+				return actual[instance] ? 1.0 : 0.0;
 			}
 
 			@Override

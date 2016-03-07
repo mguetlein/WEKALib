@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.mg.javalib.util.CountedSet;
 
 import weka.core.Attribute;
 import weka.core.Instance;
@@ -24,7 +23,14 @@ public class WekaInstancesDataSet extends AbstractDataSet implements Serializabl
 	{
 		this.inst = inst;
 		this.positiveClass = positiveClass;
-		key = DigestUtils.md5Hex(inst.toString() + "#" + positiveClass);
+
+		// avoid toString() which produces arff and takes too long on large datasets
+		//key = DigestUtils.md5Hex(inst.toString() + "#" + positiveClass);
+		StringBuffer keyStr = new StringBuffer(
+				inst.numInstances() + "#" + inst.numAttributes() + "#" + positiveClass + "#");
+		for (int i = 0; i < inst.numAttributes(); i++)
+			keyStr.append(inst.attribute(i).name() + "#" + inst.attribute(i).numValues() + "#");
+		key = DigestUtils.md5Hex(keyStr.toString());
 	}
 
 	@Override

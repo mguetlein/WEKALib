@@ -14,14 +14,14 @@ public class Printer
 
 	private static String outfileDir = null;
 
-	private static String outfileSuffix = null;
+	private static String outfilePrefix = null;
 
 	private static ThreadLocal<PrintStream> out = new ThreadLocal<>();
 
-	public static void setOutfile(String dir, String suffix)
+	public static void setOutfile(String dir, String prefix)
 	{
 		outfileDir = dir;
-		outfileSuffix = suffix;
+		outfilePrefix = prefix;
 	}
 
 	private static PrintStream out()
@@ -34,9 +34,10 @@ public class Printer
 			{
 				try
 				{
-					String file = outfileDir + "/" + DB.getThreadID();
-					if (outfileSuffix != null)
-						file += "_" + outfileSuffix;
+					String file = outfileDir + "/";
+					if (outfilePrefix != null)
+						file += outfilePrefix + "_";
+					file += DB.getThreadID();
 					System.err.println("output goes to " + file);
 					out.set(new PrintStream(new File(file)));
 				}
@@ -99,7 +100,7 @@ public class Printer
 		return wrapRunnable(msg, r, null);
 	}
 
-	public static Runnable wrapRunnable(final String msg, final Runnable r, final Runnable r2)
+	private static Runnable wrapRunnable(final String msg, final Runnable r, final Runnable r2)
 	{
 		if (r == null)
 			return null;

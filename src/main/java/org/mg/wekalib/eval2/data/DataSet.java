@@ -13,6 +13,10 @@ public interface DataSet extends KeyProvider, ComposedKeyProvider
 
 	public DataSet getTestFold(int numFolds, boolean stratified, long randomSeed, int fold);
 
+	public DataSet getTrainSplit(double ratio, boolean stratified, long randomSeed);
+
+	public DataSet getTestSplit(double ratio, boolean stratified, long randomSeed);
+
 	public Instances getWekaInstances();
 
 	public int getPositiveClass();

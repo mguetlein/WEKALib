@@ -22,11 +22,17 @@ import weka.core.Instances;
 public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<R[]>
 {
 	DataSet dataSets[];
-	DataSetJobOwner<R> job;
+	DataSetJobOwner<R> jobs[];
 
-	public void setJob(DataSetJobOwner<R> job)
+	@SuppressWarnings("unchecked")
+	public void setSameJobForAllDatasets(DataSetJobOwner<R> job)
 	{
-		this.job = job;
+		this.jobs = new DataSetJobOwner[] { job };
+	}
+
+	public void setJobs(DataSetJobOwner<R>[] jobs)
+	{
+		this.jobs = jobs;
 	}
 
 	public void setDataSets(DataSet... dataSets)
@@ -34,11 +40,20 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 		this.dataSets = dataSets;
 	}
 
+	public DataSet[] getDataSets()
+	{
+		return dataSets;
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public JobOwner<R[]> cloneJob()
 	{
 		MultiDatasetRunner<R> r = new MultiDatasetRunner<>();
-		r.setJob((DataSetJobOwner<R>) job.cloneJob());
+		DataSetJobOwner<R> j[] = new DataSetJobOwner[jobs.length];
+		for (int i = 0; i < j.length; i++)
+			j[i] = (DataSetJobOwner<R>) jobs[i].cloneJob();
+		r.setJobs(j);
 		r.setDataSets(dataSets);
 		return r;
 	}
@@ -58,17 +73,23 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(job, dataSets);
+		return getKeyContent(jobs, dataSets);
 	}
 
 	public List<DataSetJobOwner<R>> jobs()
 	{
 		List<DataSetJobOwner<R>> l = new ArrayList<DataSetJobOwner<R>>();
+		int i = 0;
 		for (DataSet dataSet : dataSets)
 		{
-			DataSetJobOwner<R> job = (DataSetJobOwner<R>) MultiDatasetRunner.this.job.cloneJob();
+			DataSetJobOwner<R> job;
+			if (jobs.length == 1)
+				job = (DataSetJobOwner<R>) jobs[0].cloneJob();
+			else
+				job = (DataSetJobOwner<R>) jobs[i].cloneJob();
 			job.setDataSet(dataSet);
 			l.add(job);
+			i++;
 		}
 		return l;
 	}
@@ -77,9 +98,14 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 	public Runnable nextJob() throws Exception
 	{
 		boolean allDone = true;
+		int i = 0;
 		for (DataSet d : dataSets)
 		{
-			DataSetJobOwner<R> job = (DataSetJobOwner<R>) this.job.cloneJob();
+			DataSetJobOwner<R> job;
+			if (jobs.length == 1)
+				job = (DataSetJobOwner<R>) jobs[0].cloneJob();
+			else
+				job = (DataSetJobOwner<R>) jobs[i].cloneJob();
 			job.setDataSet(d);
 			if (!job.isDone())
 			{
@@ -91,6 +117,7 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 									+ dataSets.length + " with dataset " + d.getName(),
 							r);
 			}
+			i++;
 		}
 
 		if (allDone)
@@ -113,7 +140,11 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 		int idx = 0;
 		for (DataSet d : dataSets)
 		{
-			DataSetJobOwner<R> job = (DataSetJobOwner<R>) this.job.cloneJob();
+			DataSetJobOwner<R> job;
+			if (jobs.length == 1)
+				job = (DataSetJobOwner<R>) jobs[0].cloneJob();
+			else
+				job = (DataSetJobOwner<R>) jobs[idx].cloneJob();
 			job.setDataSet(d);
 			R result = job.getResult();
 			if (resultArray == null)
@@ -136,7 +167,7 @@ public class MultiDatasetRunner<R extends Serializable> extends DefaultJobOwner<
 		CV cv = new CV();
 		cv.setModel(new RandomForestModel());
 		cv.setNumFolds(5);
-		run.setJob(cv);
+		run.setSameJobForAllDatasets(cv);
 		run.runSequentially();
 		for (Predictions p : run.getResult())
 			System.out.println(PredictionUtil.summaryClassification(p));

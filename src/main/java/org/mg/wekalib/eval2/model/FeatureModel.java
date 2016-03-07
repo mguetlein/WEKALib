@@ -2,7 +2,11 @@ package org.mg.wekalib.eval2.model;
 
 import java.io.File;
 
+import org.mg.javalib.io.KeyValueFileStore;
+import org.mg.javalib.util.StringUtil;
+import org.mg.javalib.util.ThreadUtil;
 import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.data.FeatureProvidedDataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
 import org.mg.wekalib.eval2.job.FeatureProvider;
 import org.mg.wekalib.eval2.job.Printer;
@@ -21,67 +25,54 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 		return "FeatureModel (" + featureProvider.getName() + ", " + model.getName() + ")";
 	}
 
+	private FeatureProvider getFeatureModelFeatureProvider()
+	{
+		FeatureProvider feat = (FeatureProvider) featureProvider.cloneJob();
+		feat.setTrainingDataset(train);
+		feat.setTestDataset(test);
+		return feat;
+	}
+
+	private Model getFeatureModelModel()
+	{
+		Model mod = (Model) model.cloneJob();
+		FeatureProvider feat = getFeatureModelFeatureProvider();
+		mod.setTrainingDataset(new FeatureProvidedDataSet(feat, true));
+		mod.setTestDataset(new FeatureProvidedDataSet(feat, false));
+		return mod;
+	}
+
 	@Override
 	public String getKeyPrefix()
 	{
-		return "FeatureModel" + File.separator + featureProvider.getKeyPrefix() + File.separator
-				+ model.getKeyPrefix()
-				+ ((train != null && featureProvider.getTrainingDataset() == null
-						&& model.getTrainingDataset() == null)
-								? (File.separator + train.getKeyPrefix()) : "");
+		if (train != null && test != null)
+			return getFeatureModelModel().getKeyPrefix();
+		else
+			return "FeatureModel" + File.separator + featureProvider.getKeyPrefix() + File.separator
+					+ model.getKeyPrefix();
 	}
 
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(train, test, featureProvider, model);
+		if (train != null && test != null)
+			return getFeatureModelModel().getKeyContent();
+		else
+			return getKeyContent(featureProvider, model);
 	}
 
 	@Override
 	public Runnable nextJob() throws Exception
 	{
-		FeatureProvider feat = (FeatureProvider) featureProvider.cloneJob();
-		feat.setTrainingDataset(train);
-		feat.setTestDataset(test);
+		FeatureProvider feat = getFeatureModelFeatureProvider();
 		if (!feat.isDone())
 			return Printer.wrapRunnable("FeatureModel: compute features " + getName(),
 					feat.nextJob());
 		else
 		{
-			Model mod = (Model) model.cloneJob();
-			DataSet res[] = feat.getResult();
-			mod.setTrainingDataset(res[0]);
-			mod.setTestDataset(res[1]);
-			if (!mod.isDone())
-			{
-				Runnable r = mod.nextJob();
-				if (r == null)
-					return null;
-				else
-					// to avoid having a lot of jobs that only store results, this jobs are concated
-					// does only work if model is a single job model
-					return Printer.wrapRunnable("FeatureModel: build model " + getName(), r,
-							storeResults(mod));
-			}
-			else
-			{
-				// model is done, but results are missing (could happen if model has been invoked directly)
-				return storeResults(mod);
-			}
+			return Printer.wrapRunnable("FeatureModel: build model " + getName(),
+					limitRuntime(getFeatureModelModel().nextJob()));
 		}
-	}
-
-	private Runnable storeResults(final Model m)
-	{
-		return blockedJob("FeatureModel: storing results", new Runnable()
-		{
-			public void run()
-			{
-				Predictions p = m.getResult();
-				//System.err.println(PredictionUtil.summaryClassification(p));
-				setResult(p);
-			};
-		});
 	}
 
 	@Override
@@ -143,6 +134,80 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 	public String getAlgorithmShortName()
 	{
 		return model.getAlgorithmShortName();
+	}
+
+	@Override
+	public boolean isValid(DataSet dataSet)
+	{
+		if (!featureProvider.isValid(dataSet))
+			return false;
+		if (tooSlow.contains(getTooSlowKey(dataSet.getName())))
+			return false;
+		return true;
+	}
+
+	public Runnable limitRuntime(final Runnable r)
+	{
+		if (r == null)
+			return null;
+		Runnable res = new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				final StringBuffer done = new StringBuffer();
+				Thread slowThread = new Thread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						long start = System.currentTimeMillis();
+						while (!done.toString().equals("done"))
+						{
+							ThreadUtil.sleep(333);
+							if (System.currentTimeMillis() - start > MAX_RUNTIME)
+							{
+								tooSlow.store(getTooSlowKey(train.getName()), true);
+								System.err.println("this alg is too slow on this data! "
+										+ train.getName() + " " + model.getName() + " "
+										+ featureProvider.getName());
+								// HACK
+								// this is not nice if multiple threads run
+								// better would be make the model build thread abortable
+								System.exit(1);
+							}
+						}
+					}
+				});
+				slowThread.start();
+				try
+				{
+					r.run();
+				}
+				finally
+				{
+					done.append("done");
+				}
+			}
+		};
+		return res;
+	}
+
+	public static final long MAX_RUNTIME = 30 * 60 * 1000;
+	private static KeyValueFileStore<String, Boolean> tooSlow = new KeyValueFileStore<>("tooSlow",
+			false, false, null, true);
+
+	private String getTooSlowKey(String datasetName)
+	{
+		if (featureProvider.getTrainingDataset() != null)
+			throw new IllegalStateException();
+		if (model.getTrainingDataset() != null)
+			throw new IllegalStateException();
+		String k = datasetName + File.separator + featureProvider.getKeyPrefix() + File.separator
+				+ model.getKeyPrefix() + File.separator
+				+ StringUtil.getMD5(getKeyContent(featureProvider, model));
+		//		System.err.println(k);
+		return k;
 	}
 
 }

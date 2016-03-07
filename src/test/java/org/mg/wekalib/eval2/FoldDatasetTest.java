@@ -38,7 +38,7 @@ public class FoldDatasetTest
 			inst.instance(i).setValue(inst.attribute(0), i);
 		inst.setClassIndex(inst.numAttributes() - 1);
 		WekaInstancesDataSet d = new WekaInstancesDataSet(inst, 1);
-		double ratio = getTargetValueRatio(d);
+		double origTargetRatio = getTargetValueRatio(d);
 
 		int numFolds = 5;
 		long randomSeed = 1;
@@ -60,11 +60,11 @@ public class FoldDatasetTest
 					Assert.assertEquals(train.getSize() + test.getSize(), d.getSize());
 
 					// endpoint-value-ratio in train is similar to ratio in entire
-					Assert.assertEquals(ratio, getTargetValueRatio(train), stratified ? 0.01 : 0.1);
+					Assert.assertEquals(origTargetRatio, getTargetValueRatio(train), stratified ? 0.01 : 0.1);
 					double testRatio = getTargetValueRatio(test);
 					// ratio in test is similar to entire ratio
-					Assert.assertEquals(ratio, testRatio, stratified ? 0.075 : 0.5);
-					maxTestRatioDiff = Math.max(maxTestRatioDiff, Math.abs(testRatio - ratio));
+					Assert.assertEquals(origTargetRatio, testRatio, stratified ? 0.075 : 0.5);
+					maxTestRatioDiff = Math.max(maxTestRatioDiff, Math.abs(testRatio - origTargetRatio));
 
 					Set<Integer> trainIdx = new HashSet<>();
 					for (Instance instance : train.getWekaInstances())

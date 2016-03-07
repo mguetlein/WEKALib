@@ -11,14 +11,21 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 	@Override
 	public boolean isDone()
 	{
-		return DB.getResultProvider().contains(getKey());
+		boolean d = DB.getResultProvider().contains(getKey());
+		//		if (d)
+		//			System.out.println("REM is done: " + getKey());
+		return d;
 	}
+
+	private R result;
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public R getResult()
 	{
-		return (R) DB.getResultProvider().get(getKey());
+		if (result == null)
+			result = (R) DB.getResultProvider().get(getKey());
+		return result;
 	}
 
 	protected void setResult(R r)
@@ -29,6 +36,7 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 		if (isDone())
 			throw new IllegalStateException("job already done");
 		DB.getResultProvider().set(getKey(), r);
+		result = r;
 	}
 
 	protected Runnable blockedJob(final String msg, final Runnable r)
@@ -82,6 +90,11 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 	@Override
 	public R runSequentially() throws Exception
 	{
+		return runSequentially(false);
+	}
+
+	public R runSequentially(boolean silent) throws Exception
+	{
 		while (!isDone())
 		{
 			Runnable r = nextJob();
@@ -92,10 +105,12 @@ public abstract class DefaultJobOwner<R extends Serializable> extends DefaultCom
 			else
 			{
 				ThreadUtil.sleep(10000);
-				Printer.println("wait until done");
+				if (!silent)
+					Printer.println("wait until done");
 			}
 		}
-		Printer.println("done! " + getKey());
+		if (!silent)
+			Printer.println("done! " + getKey());
 		return getResult();
 	}
 

@@ -56,8 +56,8 @@ import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 import weka.filters.unsupervised.attribute.Standardize;
 
 /**
- * Override by Martin Gütlein
- * Added this line: m_logistic.setMaxIts(Integer.MAX_VALUE);
+ * Override by Martin Gütlein, make logistic regression configurable
+ * See: CHANGES BY MG
  * See: http://list.waikato.ac.nz/pipermail/wekalist/2016-January/065818.html
  */
 
@@ -282,6 +282,17 @@ public class SMO extends AbstractClassifier
 		return result;
 	}
 
+	// START - CHANGES BY MG
+
+	Double ridge = null;
+
+	public void setRidge(double ridge)
+	{
+		this.ridge = ridge;
+	}
+
+	// END - CHANGES BY MG
+
 	/**
 	 * Class for building a binary support vector machine.
 	 */
@@ -423,7 +434,11 @@ public class SMO extends AbstractClassifier
 
 			// Build logistic regression model
 			m_logistic = new Logistic();
+			// START - CHANGES BY MG			
+			if (ridge != null)
+				m_logistic.setRidge(ridge);
 			m_logistic.setMaxIts(Integer.MAX_VALUE);
+			// END - CHANGES BY MG
 			m_logistic.buildClassifier(data);
 		}
 

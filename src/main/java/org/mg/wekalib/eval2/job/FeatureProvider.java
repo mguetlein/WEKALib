@@ -9,4 +9,6 @@ public interface FeatureProvider extends JobOwner<DataSet[]>
 	public void setTestDataset(DataSet test);
 
 	public DataSet getTrainingDataset();
+
+	public boolean isValid(DataSet dataSet);
 }
