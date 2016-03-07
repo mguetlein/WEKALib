@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.mg.wekalib.eval2.data.DataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
-import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
+import org.mg.wekalib.evaluation.PredictionsEvaluation;
 import org.mg.wekalib.evaluation.Predictions;
 
 import weka.classifiers.Classifier;
@@ -76,7 +76,7 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 
 			classifier.buildClassifier(trainI);
 
-			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(trainI);
+			PredictionsEvaluation eval = new PredictionsEvaluation(trainI);
 			eval.evaluateModel(classifier, testI);
 
 			Predictions p = eval.getCvPredictions();

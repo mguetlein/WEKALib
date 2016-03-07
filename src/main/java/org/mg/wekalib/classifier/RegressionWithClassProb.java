@@ -62,12 +62,14 @@ public class RegressionWithClassProb extends TransformDataClassifier
 
 		if (training)
 			traininedPropComputers.clear();
-		Instances discData = InstanceUtil.stripAttributes(data, ListUtil.createList(data.classAttribute()));
+		Instances discData = InstanceUtil.stripAttributes(data,
+				ListUtil.createList(data.classAttribute()));
 		int idx = 0;
 		for (List<String> discV : discVals)
 		{
 			Instances discDataX = new Instances(discData);
-			InstanceUtil.attachNominalAttribute(discDataX, "disc", ListUtil.createList("H", "L"), discV, true);
+			InstanceUtil.attachNominalAttribute(discDataX, "disc", ListUtil.createList("H", "L"),
+					discV, true);
 			discDataX.setClassIndex(discDataX.numAttributes() - 1);
 
 			//		System.out.println(discData);
@@ -91,7 +93,8 @@ public class RegressionWithClassProb extends TransformDataClassifier
 		Instances transformedData = new Instances(data);
 		int i = 0;
 		for (List<Double> preds : predictions)
-			InstanceUtil.attachNumericAttribute(transformedData, "prob" + discPercentile.get(i++), preds, false);
+			InstanceUtil.attachNumericAttribute(transformedData, "prob" + discPercentile.get(i++),
+					preds, false);
 		transformedData.setClassIndex(transformedData.numAttributes() - 1);
 
 		//		if (training)
@@ -104,15 +107,17 @@ public class RegressionWithClassProb extends TransformDataClassifier
 	{
 		DescriptiveStatistics stats = new DescriptiveStatistics();
 
-		for (String s : new String[] { "auto93.arff", "autoHorse.arff", "autoMpg.arff", "autoPrice.arff",
-				"baskball.arff", "bodyfat.arff", "bolts.arff", "breastTumor.arff", "cholesterol.arff",
-				"cleveland.arff", "cloud.arff", "cpu.arff", "detroit.arff", "echoMonths.arff", "elusage.arff",
-				"fishcatch.arff", "fruitfly.arff", "gascons.arff", "housing.arff", "hungarian.arff", "longley.arff",
-				"lowbwt.arff", "mbagrade.arff", "meta.arff", "pbc.arff", "pharynx.arff", "pollution.arff",
-				"pwLinear.arff", "quake.arff", "schlvote.arff", "sensory.arff", "servo.arff", "sleep.arff",
-				"strike.arff", "veteran.arff", "vineyard.arff" })
+		for (String s : new String[] { "auto93.arff", "autoHorse.arff", "autoMpg.arff",
+				"autoPrice.arff", "baskball.arff", "bodyfat.arff", "bolts.arff", "breastTumor.arff",
+				"cholesterol.arff", "cleveland.arff", "cloud.arff", "cpu.arff", "detroit.arff",
+				"echoMonths.arff", "elusage.arff", "fishcatch.arff", "fruitfly.arff",
+				"gascons.arff", "housing.arff", "hungarian.arff", "longley.arff", "lowbwt.arff",
+				"mbagrade.arff", "meta.arff", "pbc.arff", "pharynx.arff", "pollution.arff",
+				"pwLinear.arff", "quake.arff", "schlvote.arff", "sensory.arff", "servo.arff",
+				"sleep.arff", "strike.arff", "veteran.arff", "vineyard.arff" })
 		{
-			Instances inst = new Instances(new FileReader(System.getProperty("user.home") + "/data/weka/numeric/" + s));
+			Instances inst = new Instances(
+					new FileReader(System.getProperty("user.home") + "/data/weka/numeric/" + s));
 			inst.setClassIndex(inst.numAttributes() - 1);
 			System.out.println(s);
 			System.out.println("instances: " + inst.numInstances());

@@ -28,8 +28,8 @@ import weka.core.RevisionUtils;
 import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 
-public class ExtendedRandomTree extends AbstractClassifier implements OptionHandler, WeightedInstancesHandler,
-		Randomizable, Drawable, PartitionGenerator
+public class ExtendedRandomTree extends AbstractClassifier implements OptionHandler,
+		WeightedInstancesHandler, Randomizable, Drawable, PartitionGenerator
 {
 
 	public List<Integer> getUsedAttribute(Instance instance)
@@ -134,7 +134,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 	public String minVariancePropTipText()
 	{
 		return "The minimum proportion of the variance on all the data "
-				+ "that needs to be present at a node in order for splitting to " + "be performed in regression trees.";
+				+ "that needs to be present at a node in order for splitting to "
+				+ "be performed in regression trees.";
 	}
 
 	/**
@@ -337,22 +338,29 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 
 		Vector<Option> newVector = new Vector<Option>();
 
-		newVector.addElement(new Option("\tNumber of attributes to randomly investigate\n"
-				+ "\t(<0 = int(log_2(#attributes)+1)).", "K", 1, "-K <number of attributes>"));
+		newVector.addElement(new Option(
+				"\tNumber of attributes to randomly investigate\n"
+						+ "\t(<0 = int(log_2(#attributes)+1)).",
+				"K", 1, "-K <number of attributes>"));
 
 		newVector.addElement(new Option("\tSet minimum number of instances per leaf.", "M", 1,
 				"-M <minimum number of instances>"));
 
-		newVector.addElement(new Option("\tSet minimum numeric class variance proportion\n"
-				+ "\tof train variance for split (default 1e-3).", "V", 1, "-V <minimum variance for split>"));
+		newVector.addElement(new Option(
+				"\tSet minimum numeric class variance proportion\n"
+						+ "\tof train variance for split (default 1e-3).",
+				"V", 1, "-V <minimum variance for split>"));
 
-		newVector.addElement(new Option("\tSeed for random number generator.\n" + "\t(default 1)", "S", 1, "-S <num>"));
+		newVector.addElement(new Option("\tSeed for random number generator.\n" + "\t(default 1)",
+				"S", 1, "-S <num>"));
 
-		newVector.addElement(new Option("\tThe maximum depth of the tree, 0 for unlimited.\n" + "\t(default 0)",
-				"depth", 1, "-depth <num>"));
+		newVector.addElement(
+				new Option("\tThe maximum depth of the tree, 0 for unlimited.\n" + "\t(default 0)",
+						"depth", 1, "-depth <num>"));
 
-		newVector.addElement(new Option("\tNumber of folds for backfitting " + "(default 0, no backfitting).", "N", 1,
-				"-N <num>"));
+		newVector.addElement(
+				new Option("\tNumber of folds for backfitting " + "(default 0, no backfitting).",
+						"N", 1, "-N <num>"));
 		newVector.addElement(new Option("\tAllow unclassified instances.", "U", 0, "-U"));
 
 		newVector.addAll(Collections.list(super.listOptions()));
@@ -638,15 +646,16 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		double trainVariance = 0;
 		if (data.classAttribute().isNumeric())
 		{
-			trainVariance = ExtendedRandomTree.singleVariance(classProbs[0], totalSumSquared, totalWeight)
-					/ totalWeight;
+			trainVariance = ExtendedRandomTree.singleVariance(classProbs[0], totalSumSquared,
+					totalWeight) / totalWeight;
 			classProbs[0] /= totalWeight;
 		}
 
 		// Build tree
 		m_Tree = new Tree();
 		m_Info = new Instances(data, 0);
-		m_Tree.buildTree(train, classProbs, attIndicesWindow, totalWeight, rand, 0, m_MinVarianceProp * trainVariance);
+		m_Tree.buildTree(train, classProbs, attIndicesWindow, totalWeight, rand, 0,
+				m_MinVarianceProp * trainVariance);
 
 		// Backfit if required
 		if (backfit != null)
@@ -690,7 +699,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		{
 			StringBuffer buf = new StringBuffer();
 			buf.append(this.getClass().getName().replaceAll(".*\\.", "") + "\n");
-			buf.append(this.getClass().getName().replaceAll(".*\\.", "").replaceAll(".", "=") + "\n\n");
+			buf.append(this.getClass().getName().replaceAll(".*\\.", "").replaceAll(".", "=")
+					+ "\n\n");
 			buf.append("Warning: No model could be built, hence ZeroR model is used:\n\n");
 			buf.append(m_zeroR.toString());
 			return buf.toString();
@@ -702,8 +712,9 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		}
 		else
 		{
-			return "\nRandomTree\n==========\n" + m_Tree.toString(0) + "\n" + "\nSize of the tree : "
-					+ m_Tree.numNodes() + (getMaxDepth() > 0 ? ("\nMax depth of tree: " + getMaxDepth()) : (""));
+			return "\nRandomTree\n==========\n" + m_Tree.toString(0) + "\n"
+					+ "\nSize of the tree : " + m_Tree.numNodes()
+					+ (getMaxDepth() > 0 ? ("\nMax depth of tree: " + getMaxDepth()) : (""));
 		}
 	}
 
@@ -723,7 +734,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		}
 		StringBuffer resultBuff = new StringBuffer();
 		m_Tree.toGraph(resultBuff, 0, null);
-		String result = "digraph RandomTree {\n" + "edge [style=bold]\n" + resultBuff.toString() + "\n}\n";
+		String result = "digraph RandomTree {\n" + "edge [style=bold]\n" + resultBuff.toString()
+				+ "\n}\n";
 		return result;
 	}
 
@@ -895,8 +907,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 			double trainVariance = 0;
 			if (data.classAttribute().isNumeric())
 			{
-				trainVariance = ExtendedRandomTree.singleVariance(classProbs[0], totalSumSquared, totalWeight)
-						/ totalWeight;
+				trainVariance = ExtendedRandomTree.singleVariance(classProbs[0], totalSumSquared,
+						totalWeight) / totalWeight;
 				classProbs[0] /= totalWeight;
 			}
 
@@ -924,7 +936,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 				{
 					list.add(m_Attribute);
 					if (m_Info.attribute(m_Attribute).isNominal())
-						m_Successors[(int) instance.value(m_Attribute)].addUsedAttribute(instance, list);
+						m_Successors[(int) instance.value(m_Attribute)].addUsedAttribute(instance,
+								list);
 					else
 					{
 						if (instance.value(m_Attribute) < m_SplitPoint)
@@ -975,7 +988,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 				{
 
 					// For nominal attributes
-					returnedDist = m_Successors[(int) instance.value(m_Attribute)].distributionForInstance(instance);
+					returnedDist = m_Successors[(int) instance.value(m_Attribute)]
+							.distributionForInstance(instance);
 				}
 				else
 				{
@@ -1040,18 +1054,20 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		{
 
 			int maxIndex = Utils.maxIndex(m_ClassDistribution);
-			String classValue = m_Info.classAttribute().isNominal() ? m_Info.classAttribute().value(maxIndex) : Utils
-					.doubleToString(m_ClassDistribution[0], 2);
+			String classValue = m_Info.classAttribute().isNominal()
+					? m_Info.classAttribute().value(maxIndex)
+					: Utils.doubleToString(m_ClassDistribution[0], 2);
 
 			num++;
 			if (m_Attribute == -1)
 			{
-				text.append("N" + Integer.toHexString(hashCode()) + " [label=\"" + num + ": " + classValue + "\""
-						+ "shape=box]\n");
+				text.append("N" + Integer.toHexString(hashCode()) + " [label=\"" + num + ": "
+						+ classValue + "\"" + "shape=box]\n");
 			}
 			else
 			{
-				text.append("N" + Integer.toHexString(hashCode()) + " [label=\"" + num + ": " + classValue + "\"]\n");
+				text.append("N" + Integer.toHexString(hashCode()) + " [label=\"" + num + ": "
+						+ classValue + "\"]\n");
 				for (int i = 0; i < m_Successors.length; i++)
 				{
 					text.append("N" + Integer.toHexString(hashCode()) + "->" + "N"
@@ -1113,12 +1129,14 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 
 			if (m_Info.classAttribute().isNumeric())
 			{
-				return " : " + Utils.doubleToString(classMean, 2) + " (" + Utils.doubleToString(m_Distribution[1], 2)
-						+ "/" + Utils.doubleToString(avgError, 2) + ")";
+				return " : " + Utils.doubleToString(classMean, 2) + " ("
+						+ Utils.doubleToString(m_Distribution[1], 2) + "/"
+						+ Utils.doubleToString(avgError, 2) + ")";
 			}
 
-			return " : " + m_Info.classAttribute().value(maxIndex) + " (" + Utils.doubleToString(sum, 2) + "/"
-					+ Utils.doubleToString(sum - maxCount, 2) + ")";
+			return " : " + m_Info.classAttribute().value(maxIndex) + " ("
+					+ Utils.doubleToString(sum, 2) + "/" + Utils.doubleToString(sum - maxCount, 2)
+					+ ")";
 		}
 
 		/**
@@ -1165,14 +1183,16 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 					{
 						text.append("|   ");
 					}
-					text.append(m_Info.attribute(m_Attribute).name() + " < " + Utils.doubleToString(m_SplitPoint, 2));
+					text.append(m_Info.attribute(m_Attribute).name() + " < "
+							+ Utils.doubleToString(m_SplitPoint, 2));
 					text.append(m_Successors[0].toString(level + 1));
 					text.append("\n");
 					for (int j = 0; j < level; j++)
 					{
 						text.append("|   ");
 					}
-					text.append(m_Info.attribute(m_Attribute).name() + " >= " + Utils.doubleToString(m_SplitPoint, 2));
+					text.append(m_Info.attribute(m_Attribute).name() + " >= "
+							+ Utils.doubleToString(m_SplitPoint, 2));
 					text.append(m_Successors[1].toString(level + 1));
 				}
 
@@ -1192,7 +1212,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		 * @param classProbs the class distribution
 		 * @throws Exception if generation fails
 		 */
-		protected void backfitData(Instances data, double[] classProbs, double totalWeight) throws Exception
+		protected void backfitData(Instances data, double[] classProbs, double totalWeight)
+				throws Exception
 		{
 
 			// Make leaf if there are no training instances
@@ -1221,7 +1242,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 					totalSumSquared += inst.classValue() * inst.classValue() * inst.weight();
 					totalSumOfWeights += inst.weight();
 				}
-				priorVar = ExtendedRandomTree.singleVariance(totalSum, totalSumSquared, totalSumOfWeights);
+				priorVar = ExtendedRandomTree.singleVariance(totalSum, totalSumSquared,
+						totalSumOfWeights);
 			}
 
 			// Check if node doesn't contain enough instances or is pure
@@ -1253,7 +1275,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 						}
 						else
 						{
-							m_Prop[(inst.value(m_Attribute) < m_SplitPoint) ? 0 : 1] += inst.weight();
+							m_Prop[(inst.value(m_Attribute) < m_SplitPoint) ? 0 : 1] += inst
+									.weight();
 						}
 					}
 				}
@@ -1291,11 +1314,13 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 					{
 						if (data.classAttribute().isNominal())
 						{
-							dist[(int) subsets[i].instance(j).classValue()] += subsets[i].instance(j).weight();
+							dist[(int) subsets[i].instance(j).classValue()] += subsets[i]
+									.instance(j).weight();
 						}
 						else
 						{
-							dist[0] += subsets[i].instance(j).classValue() * subsets[i].instance(j).weight();
+							dist[0] += subsets[i].instance(j).classValue()
+									* subsets[i].instance(j).weight();
 							sumOfWeights += subsets[i].instance(j).weight();
 						}
 					}
@@ -1348,8 +1373,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		 * @param depth the current depth
 		 * @throws Exception if generation fails
 		 */
-		protected void buildTree(Instances data, double[] classProbs, int[] attIndicesWindow, double totalWeight,
-				Random random, int depth, double minVariance) throws Exception
+		protected void buildTree(Instances data, double[] classProbs, int[] attIndicesWindow,
+				double totalWeight, Random random, int depth, double minVariance) throws Exception
 		{
 
 			// Make leaf if there are no training instances
@@ -1379,7 +1404,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 					totalSumSquared += inst.classValue() * inst.classValue() * inst.weight();
 					totalSumOfWeights += inst.weight();
 				}
-				priorVar = ExtendedRandomTree.singleVariance(totalSum, totalSumSquared, totalSumOfWeights);
+				priorVar = ExtendedRandomTree.singleVariance(totalSum, totalSumSquared,
+						totalSumOfWeights);
 			}
 
 			// Check if node doesn't contain enough instances or is pure
@@ -1393,17 +1419,17 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 			if (totalWeight < 2 * m_MinNum ||
 
 			// Nominal case
-					(data.classAttribute().isNominal() && Utils.eq(classProbs[Utils.maxIndex(classProbs)],
-							Utils.sum(classProbs)))
+					(data.classAttribute().isNominal() && Utils
+							.eq(classProbs[Utils.maxIndex(classProbs)], Utils.sum(classProbs)))
 
 					||
 
-					// Numeric case
+			// Numeric case
 					(data.classAttribute().isNumeric() && priorVar / totalWeight < minVariance)
 
 					||
 
-					// check tree depth
+			// check tree depth
 					((getMaxDepth() > 0) && (depth >= getMaxDepth())))
 			{
 
@@ -1451,11 +1477,13 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 				attIndicesWindow[windowSize - 1] = attIndex;
 				windowSize--;
 
-				double currSplit = data.classAttribute().isNominal() ? distribution(props, dists, attIndex, data)
-						: numericDistribution(props, dists, attIndex, totalSubsetWeights, data, tempNumericVals);
+				double currSplit = data.classAttribute().isNominal()
+						? distribution(props, dists, attIndex, data)
+						: numericDistribution(props, dists, attIndex, totalSubsetWeights, data,
+								tempNumericVals);
 
-				double currVal = data.classAttribute().isNominal() ? gain(dists[0], priorVal(dists[0]))
-						: tempNumericVals[attIndex];
+				double currVal = data.classAttribute().isNominal()
+						? gain(dists[0], priorVal(dists[0])) : tempNumericVals[attIndex];
 
 				if (Utils.gr(currVal, 0))
 				{
@@ -1489,8 +1517,9 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 				for (int i = 0; i < bestDists.length; i++)
 				{
 					m_Successors[i] = new Tree();
-					m_Successors[i].buildTree(subsets[i], bestDists[i], attIndicesWindow, data.classAttribute()
-							.isNominal() ? 0 : attTotalSubsetWeights[i], random, depth + 1, minVariance);
+					m_Successors[i].buildTree(subsets[i], bestDists[i], attIndicesWindow,
+							data.classAttribute().isNominal() ? 0 : attTotalSubsetWeights[i],
+							random, depth + 1, minVariance);
 				}
 
 				// If all successors are non-empty, we don't need to store the class
@@ -1634,8 +1663,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		 * @return
 		 * @throws Exception if a problem occurs
 		 */
-		protected double numericDistribution(double[][] props, double[][][] dists, int att, double[][] subsetWeights,
-				Instances data, double[] vals) throws Exception
+		protected double numericDistribution(double[][] props, double[][][] dists, int att,
+				double[][] subsetWeights, Instances data, double[] vals) throws Exception
 		{
 
 			double splitPoint = Double.NaN;
@@ -1726,7 +1755,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 
 					if (inst.value(att) > currSplit)
 					{
-						currVal = ExtendedRandomTree.variance(currSums, currSumSquared, currSumOfWeights);
+						currVal = ExtendedRandomTree.variance(currSums, currSumSquared,
+								currSumOfWeights);
 						if (currVal < bestVal)
 						{
 							bestVal = currVal;
@@ -1788,7 +1818,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 				for (int j = 0; j < sums.length; j++)
 				{
 					sums[j] += props[0][j] * inst.classValue() * inst.weight();
-					sumSquared[j] += props[0][j] * inst.classValue() * inst.classValue() * inst.weight();
+					sumSquared[j] += props[0][j] * inst.classValue() * inst.classValue()
+							* inst.weight();
 					sumOfWeights[j] += props[0][j] * inst.weight();
 				}
 				totalSum += inst.classValue() * inst.weight();
@@ -1832,7 +1863,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 		 * @param data the data to work with
 		 * @throws Exception if something goes wrong
 		 */
-		protected double distribution(double[][] props, double[][][] dists, int att, Instances data) throws Exception
+		protected double distribution(double[][] props, double[][][] dists, int att, Instances data)
+				throws Exception
 		{
 
 			double splitPoint = Double.NaN;
@@ -2049,8 +2081,9 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 			}
 			else
 			{
-				text.append("N" + Integer.toHexString(Tree.this.hashCode()) + " [label=\"" + num + ": "
-						+ Utils.backQuoteChars(m_Info.attribute(m_Attribute).name()) + "\"]\n");
+				text.append("N" + Integer.toHexString(Tree.this.hashCode()) + " [label=\"" + num
+						+ ": " + Utils.backQuoteChars(m_Info.attribute(m_Attribute).name())
+						+ "\"]\n");
 				for (int i = 0; i < m_Successors.length; i++)
 				{
 					text.append("N" + Integer.toHexString(Tree.this.hashCode()) + "->" + "N"
@@ -2068,7 +2101,8 @@ public class ExtendedRandomTree extends AbstractClassifier implements OptionHand
 					}
 					else
 					{
-						text.append(" = " + Utils.backQuoteChars(m_Info.attribute(m_Attribute).value(i)));
+						text.append(" = "
+								+ Utils.backQuoteChars(m_Info.attribute(m_Attribute).value(i)));
 					}
 					text.append("\"]\n");
 					num = m_Successors[i].toGraph(text, num, this);

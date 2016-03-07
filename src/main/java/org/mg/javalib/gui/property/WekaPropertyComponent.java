@@ -21,7 +21,8 @@ public class WekaPropertyComponent extends JPanel implements PropertyComponent
 		if (property.getValue() instanceof DistanceFunction)
 			editor.setClassType(DistanceFunction.class);
 		else
-			throw new IllegalStateException("superclass unkonwn: " + property.getValue().getClass());
+			throw new IllegalStateException(
+					"superclass unkonwn: " + property.getValue().getClass());
 		editor.setValue(property.getValue());
 
 		setLayout(new BorderLayout());

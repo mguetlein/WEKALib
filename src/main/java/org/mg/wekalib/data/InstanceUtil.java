@@ -21,7 +21,8 @@ public class InstanceUtil
 		return getAttributes(data, attr, true);
 	}
 
-	private static Instances getAttributes(Instances data, List<Attribute> attr, boolean invert) throws Exception
+	private static Instances getAttributes(Instances data, List<Attribute> attr, boolean invert)
+			throws Exception
 	{
 		String rem = "";
 		for (int i = 0; i < data.numAttributes(); i++)
@@ -40,7 +41,8 @@ public class InstanceUtil
 		return Filter.useFilter(data, remove);
 	}
 
-	public static void attachAttributes(Instances data, List<Attribute> attr, Instances attrData, boolean end)
+	public static void attachAttributes(Instances data, List<Attribute> attr, Instances attrData,
+			boolean end)
 	{
 		int startInsert = end ? data.numAttributes() : 0;
 		List<Attribute> newAttributes = new ArrayList<>();
@@ -57,8 +59,8 @@ public class InstanceUtil
 			}
 	}
 
-	public static void attachNominalAttribute(Instances data, String name, List<String> domain, List<String> values,
-			boolean end)
+	public static void attachNominalAttribute(Instances data, String name, List<String> domain,
+			List<String> values, boolean end)
 	{
 		int idx = end ? data.numAttributes() : 0;
 		Attribute attr = new Attribute(name, domain);
@@ -71,7 +73,8 @@ public class InstanceUtil
 				data.instance(i).setValue(newAttr, values.get(i));
 	}
 
-	public static void attachNumericAttribute(Instances data, String name, List<Double> values, boolean end)
+	public static void attachNumericAttribute(Instances data, String name, List<Double> values,
+			boolean end)
 	{
 		int idx = end ? data.numAttributes() : 0;
 		Attribute attr = new Attribute(name);
@@ -99,7 +102,8 @@ public class InstanceUtil
 
 	public static void main(String[] args) throws Exception
 	{
-		Instances inst = new Instances(new FileReader("/home/martin/workspace/external/weka-3-7-12/data/iris.arff"));
+		Instances inst = new Instances(
+				new FileReader("/home/martin/workspace/external/weka-3-7-12/data/iris.arff"));
 		//		Instances inst2 = new Instances(new FileReader("/home/martin/workspace/external/weka-3-7-12/data/glass.arff"));
 
 		while (inst.size() > 10)

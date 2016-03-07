@@ -158,8 +158,8 @@ public class PCAClassifier extends TransformDataClassifier implements Conditiona
 
 	public static void main(String[] args) throws Exception
 	{
-		Instances inst = new Instances(new FileReader(System.getProperty("user.home")
-				+ "/data/weka/numeric/auto93.arff"));
+		Instances inst = new Instances(
+				new FileReader(System.getProperty("user.home") + "/data/weka/numeric/auto93.arff"));
 		System.out.println("instances: " + inst.numInstances());
 		System.out.println("attributes: " + inst.numInstances());
 

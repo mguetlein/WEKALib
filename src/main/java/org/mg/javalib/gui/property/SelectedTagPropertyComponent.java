@@ -26,11 +26,11 @@ public class SelectedTagPropertyComponent extends JComboBox implements PropertyC
 		setRenderer(new DefaultListCellRenderer()
 		{
 			@Override
-			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus)
+			public Component getListCellRendererComponent(JList list, Object value, int index,
+					boolean isSelected, boolean cellHasFocus)
 			{
-				return super.getListCellRendererComponent(list, ((Tag) value).getReadable(), index, isSelected,
-						cellHasFocus);
+				return super.getListCellRendererComponent(list, ((Tag) value).getReadable(), index,
+						isSelected, cellHasFocus);
 			}
 		});
 
@@ -39,12 +39,14 @@ public class SelectedTagPropertyComponent extends JComboBox implements PropertyC
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (getSelectedItem() != SelectedTagPropertyComponent.this.property.getValue().getSelectedTag())
+				if (getSelectedItem() != SelectedTagPropertyComponent.this.property.getValue()
+						.getSelectedTag())
 				{
 					if (update)
 						return;
 					update = true;
-					SelectedTagPropertyComponent.this.property.setValue(new SelectedTag(getSelectedIndex(),
+					SelectedTagPropertyComponent.this.property.setValue(new SelectedTag(
+							getSelectedIndex(),
 							SelectedTagPropertyComponent.this.property.getValue().getTags()));
 					update = false;
 				}
@@ -59,7 +61,8 @@ public class SelectedTagPropertyComponent extends JComboBox implements PropertyC
 				if (update)
 					return;
 				update = true;
-				setSelectedItem(SelectedTagPropertyComponent.this.property.getValue().getSelectedTag());
+				setSelectedItem(
+						SelectedTagPropertyComponent.this.property.getValue().getSelectedTag());
 				update = false;
 			}
 		});

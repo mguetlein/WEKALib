@@ -53,15 +53,18 @@ public class AttributeCrossvalidator
 
 	public static void tick(String info)
 	{
-		currentBuildCount.put(Thread.currentThread(), currentBuildCount.get(Thread.currentThread()) + 1);
+		currentBuildCount.put(Thread.currentThread(),
+				currentBuildCount.get(Thread.currentThread()) + 1);
 		System.err.println(new SimpleDateFormat("HH:mm").format(new Date()) + " "
-				+ StringUtil.concatWhitespace(currentBuildCount.get(Thread.currentThread()) + "", 3, false) + "/"
-				+ StringUtil.concatWhitespace(maxBuildCount + "", 3, false) + " "
-				+ currentRun.get(Thread.currentThread()) + " " + currentDatasetName.get(Thread.currentThread()) + " "
-				+ info);
+				+ StringUtil.concatWhitespace(currentBuildCount.get(Thread.currentThread()) + "", 3,
+						false)
+				+ "/" + StringUtil.concatWhitespace(maxBuildCount + "", 3, false) + " "
+				+ currentRun.get(Thread.currentThread()) + " "
+				+ currentDatasetName.get(Thread.currentThread()) + " " + info);
 	}
 
-	private static class MyClassifier extends AbstractClassifier implements Serializable, AdditionalMeasureProducer
+	private static class MyClassifier extends AbstractClassifier
+			implements Serializable, AdditionalMeasureProducer
 	{
 		Classifier classifier;
 		AttributeProvider attributeProvider;
@@ -72,7 +75,8 @@ public class AttributeCrossvalidator
 		@Override
 		public String[] getOptions()
 		{
-			return new String[] { classifier.getClass().getSimpleName(), attributeProvider.getName() };
+			return new String[] { classifier.getClass().getSimpleName(),
+					attributeProvider.getName() };
 		}
 
 		public MyClassifier(Classifier classifier, AttributeProvider attributeProvider)
@@ -93,7 +97,8 @@ public class AttributeCrossvalidator
 			{
 				ArrayList<Attribute> a = new ArrayList<Attribute>();
 				for (int i = 0; i < attributeProvider.getNumAttributes(); i++)
-					a.add(new Attribute(attributeProvider.getAttributeName(i), attributeProvider.getAttributeDomain(i)));
+					a.add(new Attribute(attributeProvider.getAttributeName(i),
+							attributeProvider.getAttributeDomain(i)));
 				a.add(classAttribute);
 				data = new Instances("pred", a, 1);
 				data.setClassIndex(a.size() - 1);
@@ -139,7 +144,8 @@ public class AttributeCrossvalidator
 			else if (classifier instanceof AdditionalMeasureProducer)
 				return ((AdditionalMeasureProducer) classifier).getMeasure(additionalMeasureName);
 			else
-				throw new IllegalArgumentException(additionalMeasureName + " not supported (MyClassifier)");
+				throw new IllegalArgumentException(
+						additionalMeasureName + " not supported (MyClassifier)");
 		}
 
 		@Override
@@ -155,8 +161,9 @@ public class AttributeCrossvalidator
 				filterSubset.add((int) oldInstance.value(0));
 			attributeProvider.applyFilter(filterSubset);
 
-			AttributeCrossvalidator.tick(attributeProvider.getName() + " #" + attributeProvider.getNumAttributes()
-					+ " " + classifier.getClass().getSimpleName());
+			AttributeCrossvalidator
+					.tick(attributeProvider.getName() + " #" + attributeProvider.getNumAttributes()
+							+ " " + classifier.getClass().getSimpleName());
 
 			// add feature values to instance data
 			Instances newData = getData(oldData.attribute(1));
@@ -197,7 +204,8 @@ public class AttributeCrossvalidator
 	AttributeProvider[] provider;
 	int run = 1;
 
-	public AttributeCrossvalidator(String datasetName, List<String> endpointValues, AttributeProvider... provider)
+	public AttributeCrossvalidator(String datasetName, List<String> endpointValues,
+			AttributeProvider... provider)
 	{
 		this.datasetName = datasetName;
 		this.endpointValues = endpointValues;
@@ -235,7 +243,8 @@ public class AttributeCrossvalidator
 			else if (cl.equals("Ens"))
 			{
 				Vote ens = new Vote();
-				ens.setClassifiers(new Classifier[] { new RandomForest(), new SMO(), new NaiveBayes() });
+				ens.setClassifiers(
+						new Classifier[] { new RandomForest(), new SMO(), new NaiveBayes() });
 				this.classifiers[idx++] = ens;
 			}
 			//			else if (cl.equals("LibSVM"))
@@ -253,7 +262,8 @@ public class AttributeCrossvalidator
 		{
 			ArrayList<Attribute> a = new ArrayList<Attribute>();
 			a.add(new Attribute("index"));
-			a.add(new Attribute("endpoints", new ArrayList<String>(new HashSet<String>(endpointValues))));
+			a.add(new Attribute("endpoints",
+					new ArrayList<String>(new HashSet<String>(endpointValues))));
 			Instances data = new Instances(datasetName, a, endpointValues.size());
 			int idx = 0;
 			for (String e : endpointValues)
@@ -314,9 +324,11 @@ public class AttributeCrossvalidator
 		PropertyNode[] propertyPath = new PropertyNode[2];
 		try
 		{
-			propertyPath[0] = new PropertyNode(se, new PropertyDescriptor("splitEvaluator",
-					CrossValidationResultProducer.class), CrossValidationResultProducer.class);
-			propertyPath[1] = new PropertyNode(sec, new PropertyDescriptor("classifier", se.getClass()), se.getClass());
+			propertyPath[0] = new PropertyNode(se,
+					new PropertyDescriptor("splitEvaluator", CrossValidationResultProducer.class),
+					CrossValidationResultProducer.class);
+			propertyPath[1] = new PropertyNode(sec,
+					new PropertyDescriptor("classifier", se.getClass()), se.getClass());
 		}
 		catch (IntrospectionException e)
 		{

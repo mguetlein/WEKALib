@@ -37,7 +37,8 @@ public class MergeArffFiles
 		for (String n : new File(infileDirectory).list())
 		{
 			String s = infileDirectory + File.separator + n;
-			if (s.endsWith(".arff") && !s.equals(outfilePath) && filter.accept(new File(infileDirectory), n))
+			if (s.endsWith(".arff") && !s.equals(outfilePath)
+					&& filter.accept(new File(infileDirectory), n))
 				files.add(s);
 		}
 		Collections.sort(files);
@@ -45,7 +46,8 @@ public class MergeArffFiles
 			merge(ArrayUtil.toArray(files), outfilePath);
 	}
 
-	public static void merge(String[] infiles, String outfilePath) throws FileNotFoundException, IOException
+	public static void merge(String[] infiles, String outfilePath)
+			throws FileNotFoundException, IOException
 	{
 		String completeCsv[] = null;
 
@@ -129,11 +131,14 @@ public class MergeArffFiles
 							if (!name.contains(alg))
 								return false;
 							if (orP2)
-								return ((p == null || name.contains(p)) || (p2 == null || name.contains(p2)));
+								return ((p == null || name.contains(p))
+										|| (p2 == null || name.contains(p2)));
 							else
-								return ((p == null || name.contains(p)) && (p2 == null || name.contains(p2)));
+								return ((p == null || name.contains(p))
+										&& (p2 == null || name.contains(p2)));
 						}
-					}, dest + "/" + alg + (p == null ? "" : ("_" + p)) + (p2 == null ? "" : ("_" + p2)) + ".arff");
+					}, dest + "/" + alg + (p == null ? "" : ("_" + p))
+							+ (p2 == null ? "" : ("_" + p2)) + ".arff");
 				}
 			}
 		}

@@ -101,7 +101,8 @@ public class WekaPropertyUtil
 		return getProperties(wekaAlgorithm, skipProperties, null);
 	}
 
-	public static Property[] getProperties(Object wekaAlgorithm, String[] skipProperties, DefaultChanger changer)
+	public static Property[] getProperties(Object wekaAlgorithm, String[] skipProperties,
+			DefaultChanger changer)
 	{
 		List<Property> props = new ArrayList<Property>();
 		try
@@ -121,27 +122,29 @@ public class WekaPropertyUtil
 
 				Method getter = propertyDescriptor.getReadMethod();
 				if (type == boolean.class)
-					props.add(new BooleanProperty(name, uniqueName, (Boolean) (defaultValue != null ? defaultValue
-							: getter.invoke(wekaAlgorithm, (Object[]) null))));
+					props.add(new BooleanProperty(name, uniqueName, (Boolean) (defaultValue != null
+							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (type == int.class)
-					props.add(new IntegerProperty(name, uniqueName, (Integer) (defaultValue != null ? defaultValue
-							: getter.invoke(wekaAlgorithm, (Object[]) null))));
+					props.add(new IntegerProperty(name, uniqueName, (Integer) (defaultValue != null
+							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (type == double.class)
-					props.add(new DoubleProperty(name, uniqueName, (Double) (defaultValue != null ? defaultValue
-							: getter.invoke(wekaAlgorithm, (Object[]) null))));
+					props.add(new DoubleProperty(name, uniqueName, (Double) (defaultValue != null
+							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (OptionHandler.class.isAssignableFrom(type))
-					props.add(new WekaProperty(name, uniqueName, (OptionHandler) (defaultValue != null ? defaultValue
-							: getter.invoke(wekaAlgorithm, (Object[]) null))));
+					props.add(new WekaProperty(name, uniqueName,
+							(OptionHandler) (defaultValue != null ? defaultValue
+									: getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (type == SelectedTag.class)
 					props.add(new SelectedTagProperty(name, uniqueName,
-							(SelectedTag) (defaultValue != null ? defaultValue : getter.invoke(wekaAlgorithm,
-									(Object[]) null))));
+							(SelectedTag) (defaultValue != null ? defaultValue
+									: getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (type == File.class)
-					props.add(new FileProperty(name, uniqueName, (File) (defaultValue != null ? defaultValue : getter
-							.invoke(wekaAlgorithm, (Object[]) null))));
+					props.add(new FileProperty(name, uniqueName, (File) (defaultValue != null
+							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else
 				{
-					throw new Error("unknown type in algorithm '" + wekaAlgorithm.getClass().getName() + "' : " + type);
+					throw new Error("unknown type in algorithm '"
+							+ wekaAlgorithm.getClass().getName() + "' : " + type);
 				}
 			}
 		}
@@ -166,7 +169,8 @@ public class WekaPropertyUtil
 		setProperties(wekaAlgorithm, properties, false);
 	}
 
-	public static void setProperties(Object wekaAlgorithm, Property[] properties, boolean setDefaultProps)
+	public static void setProperties(Object wekaAlgorithm, Property[] properties,
+			boolean setDefaultProps)
 	{
 		try
 		{

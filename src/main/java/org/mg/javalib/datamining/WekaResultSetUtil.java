@@ -31,9 +31,11 @@ public class WekaResultSetUtil
 		}
 		return set;
 	}
-	
-	public static TTester T_TESTER = new TTester(){
-		public int ttest(double v1[], double v2[], double mean1, double mean2, double confidence, Double correctTerm)
+
+	public static TTester T_TESTER = new TTester()
+	{
+		public int ttest(double v1[], double v2[], double mean1, double mean2, double confidence,
+				Double correctTerm)
 		{
 			PairedStats pairedStats;
 			if (correctTerm == null)

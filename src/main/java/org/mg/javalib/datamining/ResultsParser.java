@@ -13,12 +13,13 @@ import weka.core.Instances;
 
 public class ResultsParser
 {
-	public static final String[] PERFORMANCE_MEASURES = new String[] { "Accuracy", "AUC", "Sensitivity", "Selectivity",
-			"Specificity" };
+	public static final String[] PERFORMANCE_MEASURES = new String[] { "Accuracy", "AUC",
+			"Sensitivity", "Selectivity", "Specificity" };
 	//	public static final String[] PERFORMANCE_MEASURES = new String[] { "TP", "FP", "TN", "FN" };
 
 	static String performanceMeasures[];
 	static HashMap<String, String> wekaAttributes = new LinkedHashMap<>();
+
 	static
 	{
 		setPerformanceMeasures(PERFORMANCE_MEASURES);
@@ -68,15 +69,16 @@ public class ResultsParser
 		wekaAttributes.put("Key_Scheme", "Algorithm");
 	}
 
-	public static void parse(String arffResultFiles[], String baseName, String props[]) throws Exception
+	public static void parse(String arffResultFiles[], String baseName, String props[])
+			throws Exception
 	{
 		HashMap<String, String[]> p = new HashMap<>();
 		p.put("Props", props);
 		parse(arffResultFiles, baseName, p);
 	}
 
-	public static void parse(String arffResultFiles[], String baseName, HashMap<String, String[]> props)
-			throws Exception
+	public static void parse(String arffResultFiles[], String baseName,
+			HashMap<String, String[]> props) throws Exception
 	{
 		//		File arff;
 		//		if (arffResultFiles.length > 1)
@@ -95,7 +97,8 @@ public class ResultsParser
 			if (allResults == null)
 				allResults = WekaResultSetUtil.fromWekaDataset(new Instances(new FileReader(arff)));
 			else
-				allResults.concat(WekaResultSetUtil.fromWekaDataset(new Instances(new FileReader(arff))));
+				allResults.concat(
+						WekaResultSetUtil.fromWekaDataset(new Instances(new FileReader(arff))));
 		}
 
 		for (String name : props.keySet())
@@ -107,17 +110,21 @@ public class ResultsParser
 			{
 				int idx = results.addResult();
 				for (String wp : wekaAttributes.keySet())
-					results.setResultValue(idx, wekaAttributes.get(wp), allResults.getResultValue(i, wp));
+					results.setResultValue(idx, wekaAttributes.get(wp),
+							allResults.getResultValue(i, wp));
 			}
-			if (wekaAttributes.containsKey("Percent_correct") && results.getProperties().contains("Percent_correct"))
+			if (wekaAttributes.containsKey("Percent_correct")
+					&& results.getProperties().contains("Percent_correct"))
 				for (int i = 0; i < results.getNumResults(); i++)
 					results.setResultValue(i, wekaAttributes.get("Percent_correct"),
-							((Double) results.getResultValue(i, wekaAttributes.get("Percent_correct"))) * 0.01);
+							((Double) results.getResultValue(i,
+									wekaAttributes.get("Percent_correct"))) * 0.01);
 
 			if (wekaAttributes.containsKey("Key_Scheme"))
 				for (int i = 0; i < results.getNumResults(); i++)
 				{
-					String s = results.getResultValue(i, wekaAttributes.get("Key_Scheme")).toString();
+					String s = results.getResultValue(i, wekaAttributes.get("Key_Scheme"))
+							.toString();
 					s = s.substring(s.lastIndexOf('.') + 1);
 					results.setResultValue(i, wekaAttributes.get("Key_Scheme"), s);
 				}

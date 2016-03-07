@@ -73,8 +73,8 @@ public abstract class AppDomainCrossValidationResultProducer extends CrossValida
 					if (m_debugOutput)
 					{
 						String resultName = ("" + run + "." + (fold + 1) + "."
-								+ Utils.backQuoteChars(runInstances.relationName()) + "." + m_SplitEvaluator.toString())
-								.replace(' ', '_');
+								+ Utils.backQuoteChars(runInstances.relationName()) + "."
+								+ m_SplitEvaluator.toString()).replace(' ', '_');
 						resultName = Utils.removeSubstring(resultName, "weka.classifiers.");
 						resultName = Utils.removeSubstring(resultName, "weka.filters.");
 						resultName = Utils.removeSubstring(resultName, "weka.attributeSelection.");
