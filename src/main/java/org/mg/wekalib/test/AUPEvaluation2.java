@@ -8,6 +8,9 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import org.jfree.chart.ChartPanel;
+import org.mg.javalib.freechart.FreeChartUtil;
+import org.mg.javalib.io.ExternalTool;
 import org.mg.javalib.util.StringUtil;
 import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.evaluation.PredictionUtil;
@@ -87,11 +90,23 @@ public class AUPEvaluation2
 			}
 			System.out.print(StringUtil.concatWhitespace(p + " " + s, 23));
 
-			if (!ref && (m == ClassificationMeasure.AUC || m == ClassificationMeasure.AUPRC))
+			if (m == ClassificationMeasure.AUC || m == ClassificationMeasure.AUPRC)
 			{
-				JPanel panel = PredictionUtilPlots.getPlot(m, 1, pred, refP);
-				panel.setPreferredSize(new Dimension(220, 220));
+				JPanel panel;
+				if (ref)
+					panel = PredictionUtilPlots.getPlot(m, 1, pred);
+				else
+					panel = PredictionUtilPlots.getPlot(m, 1, pred, refP);
+				panel.setPreferredSize(new Dimension(250, 220));
 				panel.setOpaque(false);
+
+				ChartPanel cp = (ChartPanel) panel;
+				String fname = "/home/martin/documents/ecfps/latex/auprc/" + m + "_"
+						+ "abcde".charAt(seriesIdx);
+				FreeChartUtil.toSVGFile(fname + ".svg", cp, panel.getPreferredSize());
+				new ExternalTool(null).run("to-pdf",
+						("rsvg-convert -f pdf -o " + fname + ".pdf " + fname + ".svg").split(" "));
+
 				//				String fName = null;
 				//				int i = 0;
 				//				while (fName == null || new File(fName).exists())
@@ -118,5 +133,6 @@ public class AUPEvaluation2
 			p.add(pa);
 		SwingUtil.showInFrame(p);
 		//		SwingUtil.toFile("/tmp/aup-" + auc + ".png", p, p.getPreferredSize());
+		System.exit(1);
 	}
 }

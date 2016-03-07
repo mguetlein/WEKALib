@@ -63,9 +63,11 @@ public class PredictionsPlot
 
 		for (int i = 0; i < preds.size(); i++)
 		{
-			names.set(i, names.get(i) + " pearson: " + StringUtil.formatDouble(PredictionUtil.pearson(preds.get(i)))
-					+ " rmse: " + StringUtil.formatDouble(PredictionUtil.rmse(preds.get(i))));
-			d.addSeries(names.get(i), new double[][] { preds.get(i).predicted, preds.get(i).actual });
+			names.set(i, names.get(i) + " pearson: "
+					+ StringUtil.formatDouble(PredictionUtil.pearson(preds.get(i))) + " rmse: "
+					+ StringUtil.formatDouble(PredictionUtil.rmse(preds.get(i))));
+			d.addSeries(names.get(i),
+					new double[][] { preds.get(i).predicted, preds.get(i).actual });
 		}
 
 		JFreeChart f = ChartFactory.createScatterPlot(title, "predicted", "actual", d);
@@ -117,7 +119,8 @@ public class PredictionsPlot
 		}
 
 		XYAnnotation diagonal = new XYLineAnnotation(xAxis.getRange().getLowerBound(),
-				yAxis.getRange().getLowerBound(), xAxis.getRange().getUpperBound(), yAxis.getRange().getUpperBound());
+				yAxis.getRange().getLowerBound(), xAxis.getRange().getUpperBound(),
+				yAxis.getRange().getUpperBound());
 		plot.addAnnotation(diagonal);
 
 		ChartPanel cp = new ChartPanel(f);

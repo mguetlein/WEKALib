@@ -1,6 +1,5 @@
 package org.mg.wekalib.eval2.persistance;
 
-
 public interface Blocker
 {
 	public boolean isBlockedByThread(String key, String threadId);

@@ -18,7 +18,7 @@ import weka.classifiers.meta.RegressionByDiscretization;
 import weka.core.BatchPredictor;
 import weka.core.Instances;
 
-public class CVPredictionsEvaluation extends Evaluation
+public class PredictionsEvaluation extends Evaluation
 {
 	public static class MyDelegate extends weka.classifiers.evaluation.Evaluation
 	{
@@ -190,7 +190,7 @@ public class CVPredictionsEvaluation extends Evaluation
 		}
 	}
 
-	public CVPredictionsEvaluation(Instances data) throws Exception
+	public PredictionsEvaluation(Instances data) throws Exception
 	{
 		super(data);
 		m_delegate = new MyDelegate(data);
@@ -208,7 +208,7 @@ public class CVPredictionsEvaluation extends Evaluation
 			Instances inst = new Instances(
 					new FileReader("/home/martin/data/weka/numeric/baskball.arff"));
 			inst.setClassIndex(inst.numAttributes() - 1);
-			CVPredictionsEvaluation eval = new CVPredictionsEvaluation(inst);
+			PredictionsEvaluation eval = new PredictionsEvaluation(inst);
 			eval.crossValidateModel(new RegressionByDiscretization(), inst, 10, new Random(),
 					new Object[0]);
 			System.out.println(eval.correlationCoefficient());

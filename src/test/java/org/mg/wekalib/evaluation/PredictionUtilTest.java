@@ -43,7 +43,7 @@ public class PredictionUtilTest
 			Evaluation eval = new Evaluation(train);
 			eval.evaluateModel(nb, test);
 
-			CVPredictionsEvaluation eval2 = new CVPredictionsEvaluation(train);
+			PredictionsEvaluation eval2 = new PredictionsEvaluation(train);
 			eval2.evaluateModel(nb, test);
 			Predictions p = eval2.getCvPredictions();
 

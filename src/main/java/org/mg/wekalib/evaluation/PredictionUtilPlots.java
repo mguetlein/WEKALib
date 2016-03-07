@@ -19,6 +19,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.mg.javalib.freechart.FreeChartUtil;
 import org.mg.javalib.util.ArrayUtil;
 
 import weka.core.Instances;
@@ -98,7 +99,7 @@ public class PredictionUtilPlots extends PredictionUtil
 				xAttr, // x axis label
 				yAttr, // y axis label
 				dataset, // data
-				PlotOrientation.VERTICAL, true, // include legend
+				PlotOrientation.VERTICAL, false, // include legend
 				true, // tooltips
 				false // urls
 		);
@@ -110,7 +111,17 @@ public class PredictionUtilPlots extends PredictionUtil
 		for (int i = 0; i < preds.length; i++)
 		{
 			renderer.setSeriesLinesVisible(i, true);
-			renderer.setSeriesShapesVisible(i, preds.length == 1);
+			renderer.setSeriesShapesVisible(i, false);//preds.length == 1);
+		}
+
+		if (preds.length == 1)
+		{
+			renderer.setSeriesPaint(0, FreeChartUtil.BRIGHT_RED);
+		}
+		if (preds.length == 2)
+		{
+			renderer.setSeriesPaint(0, FreeChartUtil.BRIGHT_BLUE);
+			renderer.setSeriesPaint(1, FreeChartUtil.BRIGHT_RED);
 		}
 
 		plot.setRenderer(renderer);

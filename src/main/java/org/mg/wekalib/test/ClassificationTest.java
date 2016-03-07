@@ -10,7 +10,7 @@ import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetBoxPlot;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
-import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
+import org.mg.wekalib.evaluation.PredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekalib.evaluation.Predictions;
 
@@ -184,7 +184,7 @@ public class ClassificationTest
 				//				System.out.println(test);
 				classifier.buildClassifier(train);
 
-				CVPredictionsEvaluation eval = new CVPredictionsEvaluation(train);
+				PredictionsEvaluation eval = new PredictionsEvaluation(train);
 				eval.evaluateModel(classifier, test);
 
 				//				eval.crossValidateModel(classifier, inst, 5, new Random(1), new Object[0]);

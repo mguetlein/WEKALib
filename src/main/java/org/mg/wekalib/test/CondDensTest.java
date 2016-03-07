@@ -23,7 +23,7 @@ import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.ListUtil;
 import org.mg.javalib.util.SwingUtil;
 import org.mg.wekalib.classifier.MyBagging;
-import org.mg.wekalib.evaluation.CVPredictionsEvaluation;
+import org.mg.wekalib.evaluation.PredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekalib.evaluation.Predictions;
 import org.mg.wekalib.evaluation.PredictionsPlot;
@@ -251,7 +251,7 @@ public class CondDensTest
 			int dc;
 
 			{
-				CVPredictionsEvaluation eval = new CVPredictionsEvaluation(inst);
+				PredictionsEvaluation eval = new PredictionsEvaluation(inst);
 				eval.crossValidateModel(classifier, inst, 10, new Random(1), new Object[0]);
 				Predictions p = eval.getCvPredictions();
 				p = PredictionUtil.stripActualNaN(p);

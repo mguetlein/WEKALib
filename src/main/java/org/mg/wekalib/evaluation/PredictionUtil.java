@@ -599,26 +599,8 @@ public class PredictionUtil
 	public static double[] AUCPerFold(Predictions preds)
 	{
 		List<Double> pPerFold = new ArrayList<>();
-
-		int minMax[] = ArrayUtil.getMinMax(preds.fold);
-		for (int i = minMax[0]; i <= minMax[1]; i++)
-		{
-			List<Boolean> a = new ArrayList<>();
-			List<Boolean> p = new ArrayList<>();
-			List<Double> c = new ArrayList<>();
-			for (int j = 0; j < preds.actual.length; j++)
-			{
-				if (preds.fold[j] == i)
-				{
-					a.add(preds.actual[j] == 1.0);
-					p.add(preds.predicted[j] == 1.0);
-					c.add(preds.confidence[j]);
-				}
-			}
-			pPerFold.add(AUCComputer.compute(ArrayUtil.toPrimitiveBooleanArray(a),
-					ArrayUtil.toPrimitiveBooleanArray(p), ArrayUtil.toPrimitiveDoubleArray(c)));
-		}
-
+		for (Predictions p : perFold(preds))
+			pPerFold.add(AUC(p));
 		return ArrayUtil.toPrimitiveDoubleArray(pPerFold);
 	}
 
