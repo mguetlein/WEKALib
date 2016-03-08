@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,25 +17,17 @@ import weka.core.SparseInstance;
 
 public class PredictionAttributeComputation
 {
-
-	public static Set<Integer> allAttributes(Instance instance)
-	{
-		Set<Integer> atts = new HashSet<>();
-		for (int i = 0; i < instance.dataset().numAttributes(); i++)
-			if (instance.dataset().classIndex() != i)
-				atts.add(i);
-		return atts;
-	}
-
 	public static List<PredictionAttribute> compute(Classifier classifier, Instance instance,
-			double[] distributionForInstance, Set<Integer> attributesUsedForPrediction,
-			HashMap<Integer, Set<Integer>> attributesToSwitch) throws Exception
+			double[] distributionForInstance, HashMap<Integer, Set<Integer>> attributesToSwitch)
+					throws Exception
 	{
 		int predictionIndex = ArrayUtil.getMaxIndex(distributionForInstance);
 
 		List<PredictionAttribute> attributes = new ArrayList<PredictionAttribute>();
-		for (Integer a : attributesUsedForPrediction)
+		for (int a = 0; a < instance.dataset().numAttributes(); a++)
 		{
+			if (instance.dataset().classIndex() == a)
+				continue;
 			Attribute att = instance.dataset().attribute(a);
 
 			//			System.out.println();
