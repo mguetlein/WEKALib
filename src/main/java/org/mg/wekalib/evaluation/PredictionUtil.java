@@ -172,6 +172,8 @@ public class PredictionUtil
 
 	private static class InfoPredictions extends Predictions
 	{
+		private static final long serialVersionUID = 1L;
+
 		public String info[];
 	}
 
