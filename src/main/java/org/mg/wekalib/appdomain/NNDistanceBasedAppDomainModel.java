@@ -4,37 +4,34 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.math3.stat.inference.TestUtils;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.Binning;
 import org.mg.javalib.util.DoubleArraySummary;
 import org.mg.javalib.util.HashUtil;
 import org.mg.javalib.util.SortedList;
+import org.mg.javalib.util.SwingUtil;
 
 import weka.core.Instance;
 import weka.core.Instances;
 
-public abstract class KNNDistanceBasedAppDomainModel implements AppDomainModel
+public abstract class NNDistanceBasedAppDomainModel implements AppDomainModel
 {
 	// params
 
-	int k = 5;
+	int k = 3;
 
-	public enum AvgMethod
-	{
-		mean, median;
-	}
-
-	AvgMethod avgMethod = AvgMethod.mean;
-
-	double max = 1;
+	double minP = 0.0001;
 
 	// member variables
 
-	private double avgTrainingDist;
+	double meanTrainingDistance;
 
 	private Instances trainingData;
 
-	public abstract double computeDistance(Instance i1, Instance i2);
+	protected abstract double computeDistance(Instance i1, Instance i2);
 
-	public abstract void buildInternal(Instances trainingData);
+	protected abstract void buildInternal(Instances trainingData);
 
 	private HashMap<Integer, Double> distances = new HashMap<>();
 
@@ -58,11 +55,12 @@ public abstract class KNNDistanceBasedAppDomainModel implements AppDomainModel
 		List<Double> knnTrainingDistances = new ArrayList<>();
 		for (Instance instance : trainingData)
 			knnTrainingDistances.add(computeKnnDist(instance));
-		if (avgMethod == AvgMethod.mean)
-			avgTrainingDist = DoubleArraySummary.create(knnTrainingDistances).getMean();
-		else
-			avgTrainingDist = DoubleArraySummary.create(knnTrainingDistances).getMedian();
+		meanTrainingDistance = DoubleArraySummary.create(knnTrainingDistances).getMean();
+		binning = new Binning(ArrayUtil.toPrimitiveDoubleArray(knnTrainingDistances), 10, false);
+		SwingUtil.showInFrame(binning.plot());
 	}
+
+	Binning binning;
 
 	private double computeKnnDist(Instance instance)
 	{
@@ -80,18 +78,31 @@ public abstract class KNNDistanceBasedAppDomainModel implements AppDomainModel
 				dists.remove(k);
 			}
 		}
-		double dist;
-		if (avgMethod == AvgMethod.mean)
-			dist = DoubleArraySummary.create(dists).getMean();
-		else
-			dist = DoubleArraySummary.create(dists).getMedian();
-		return dist;
+		return dists.get(k - 1);
 	}
 
 	@Override
 	public boolean isInsideAppdomain(Instance testInstance)
 	{
-		double dist = computeKnnDist(testInstance);
-		return dist <= avgTrainingDist * max;
+		return pValue(testInstance) >= minP;
 	}
+
+	@Override
+	public double pValue(Instance testInstance)
+	{
+		double dist = computeKnnDist(testInstance);
+		if (dist <= meanTrainingDistance)
+			return 1.0;
+		long all[] = binning.getAllCounts();
+		long selected[] = binning.getSelectedCounts(dist);
+		double p = TestUtils.chiSquareTestDataSetsComparison(selected, all);
+		System.out.println(p);
+		if (p < minP)
+		{
+			System.out.println("distance: " + dist);
+			SwingUtil.showInFrame(binning.plot(dist), dist + " : " + p, false);
+		}
+		return p;
+	}
+
 }

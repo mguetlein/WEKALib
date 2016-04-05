@@ -793,7 +793,7 @@ public class PredictionUtil
 			switch (this)
 			{
 				case AUC:
-					return "AUC";
+					return "AUROC";
 				case AUPRC:
 					return "AUPRC";
 				case Accuracy:

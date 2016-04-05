@@ -17,13 +17,13 @@ import weka.core.SparseInstance;
 
 public class PredictionAttributeComputation
 {
-	public static List<PredictionAttribute> compute(Classifier classifier, Instance instance,
+	public static List<PredictionAttributeImpl> compute(Classifier classifier, Instance instance,
 			double[] distributionForInstance, HashMap<Integer, Set<Integer>> attributesToSwitch)
 					throws Exception
 	{
 		int predictionIndex = ArrayUtil.getMaxIndex(distributionForInstance);
 
-		List<PredictionAttribute> attributes = new ArrayList<PredictionAttribute>();
+		List<PredictionAttributeImpl> attributes = new ArrayList<PredictionAttributeImpl>();
 		for (int a = 0; a < instance.dataset().numAttributes(); a++)
 		{
 			if (instance.dataset().classIndex() == a)
@@ -63,16 +63,16 @@ public class PredictionAttributeComputation
 			double newProp = newDistri[predictionIndex];
 			double diff = Math.abs(distributionForInstance[predictionIndex] - newProp);
 
-			PredictionAttribute pa = new PredictionAttribute(a, newDistri, diff);
+			PredictionAttributeImpl pa = new PredictionAttributeImpl(a, newDistri, diff);
 			attributes.add(pa);
 		}
 		//		System.out.println();
 		//		System.out.println(instance);
 
-		Collections.sort(attributes, new Comparator<PredictionAttribute>()
+		Collections.sort(attributes, new Comparator<PredictionAttributeImpl>()
 		{
 			@Override
-			public int compare(PredictionAttribute o1, PredictionAttribute o2)
+			public int compare(PredictionAttributeImpl o1, PredictionAttributeImpl o2)
 			{
 				return Double.valueOf(o2.getDiffToOrigProp())
 						.compareTo(Double.valueOf(o1.getDiffToOrigProp()));
