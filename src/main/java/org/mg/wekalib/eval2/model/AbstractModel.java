@@ -3,9 +3,10 @@ package org.mg.wekalib.eval2.model;
 import java.io.File;
 
 import org.mg.wekalib.eval2.data.DataSet;
+import org.mg.wekalib.eval2.data.SplitDataSet;
 import org.mg.wekalib.eval2.job.DefaultJobOwner;
-import org.mg.wekalib.evaluation.PredictionsEvaluation;
 import org.mg.wekalib.evaluation.Predictions;
+import org.mg.wekalib.evaluation.PredictionsEvaluation;
 
 import weka.classifiers.Classifier;
 import weka.core.Instances;
@@ -35,6 +36,11 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 	@Override
 	public String getName()
 	{
+		return getWekaClassifierName();
+	}
+
+	public String getWekaClassifierName()
+	{
 		return getWekaClassifer().getClass().getSimpleName();
 	}
 
@@ -44,7 +50,7 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 		String prefix = "";
 		if (train != null)
 			prefix += train.getKeyPrefix() + File.separator;
-		prefix += getWekaClassifer().getClass().getSimpleName();
+		prefix += getWekaClassifierName();
 		return prefix;
 	}
 
@@ -80,6 +86,10 @@ public abstract class AbstractModel extends DefaultJobOwner<Predictions> impleme
 			eval.evaluateModel(classifier, testI);
 
 			Predictions p = eval.getCvPredictions();
+
+			if (test instanceof SplitDataSet)
+				for (int i = 0; i < p.origIndex.length; i++)
+					p.origIndex[i] = ((SplitDataSet) test).getOrigIndex(i);
 
 			// System.err.println(PredictionUtil.summaryClassification(p));
 			// PredictionUtil.printPredictionsWithConfidence(p, train.getPositiveClass());

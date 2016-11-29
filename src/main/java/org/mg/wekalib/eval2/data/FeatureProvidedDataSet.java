@@ -21,6 +21,11 @@ public class FeatureProvidedDataSet extends AbstractDataSet implements WrappedDa
 		this.train = train;
 	}
 
+	public FeatureProvider getFeatureProvider()
+	{
+		return featureProvider;
+	}
+
 	@Override
 	public int getPositiveClass()
 	{

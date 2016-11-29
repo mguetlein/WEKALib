@@ -193,7 +193,7 @@ public class FeatureModel extends DefaultJobOwner<Predictions> implements Model
 		return res;
 	}
 
-	public static final long MAX_RUNTIME = 30 * 60 * 1000;
+	public static long MAX_RUNTIME = 30 * 60 * 1000;
 	private static KeyValueFileStore<String, Boolean> tooSlow = new KeyValueFileStore<>(
 			System.getProperty("user.home") + "/results/cfpminer/tooSlow", false, false, null,
 			true);

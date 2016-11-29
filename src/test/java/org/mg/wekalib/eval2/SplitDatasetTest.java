@@ -50,8 +50,8 @@ public class SplitDatasetTest
 
 			for (int repetition = 0; repetition < 2; repetition++)
 			{
-				DataSet train = d.getTrainSplit(splitRatio, stratified, randomSeed);
-				DataSet test = d.getTestSplit(splitRatio, stratified, randomSeed);
+				DataSet train = d.getTrainSplit(splitRatio, stratified, randomSeed, null);
+				DataSet test = d.getTestSplit(splitRatio, stratified, randomSeed, null);
 				System.out.println(train.getSize() + " " + test.getSize() + " " + d.getSize());
 				// test dataset + train dataset sizes add up to entire dataset size 
 				Assert.assertEquals(train.getSize() + test.getSize(), d.getSize());

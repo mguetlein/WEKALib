@@ -18,18 +18,20 @@ public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 	protected boolean stratified;
 	protected long randomSeed;
 	protected boolean train;
+	protected AntiStratifiedSplitter antiStratification;
 
 	private DataSet self;
 	private Instances instances;
 
 	public SplitDataSet(DataSet parent, double splitRatio, boolean stratified, long randomSeed,
-			boolean train)
+			boolean train, AntiStratifiedSplitter antiStratification)
 	{
 		this.parent = parent;
 		this.splitRatio = splitRatio;
 		this.stratified = stratified;
 		this.randomSeed = randomSeed;
 		this.train = train;
+		this.antiStratification = antiStratification;
 	}
 
 	@Override
@@ -41,7 +43,11 @@ public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 	@Override
 	public String getKeyContent()
 	{
-		return getKeyContent(parent, splitRatio, randomSeed, train, stratified);
+		if (antiStratification == null)
+			return getKeyContent(parent, splitRatio, randomSeed, train, stratified);
+		else
+			return getKeyContent(parent, splitRatio, randomSeed, train, stratified,
+					antiStratification);
 	}
 
 	public double getSplitRatio()
@@ -67,16 +73,37 @@ public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 		return getSelf().getEndpoints();
 	}
 
-	public DataSet getSelf()
+	public String getName()
 	{
-		if (self == null)
+		// name is used as key prefix, keep it simple		
+		//		return parent.getName() + "/" + (train ? "Train" : "Test") + "-fold-" + (fold + 1) + "-of-" + numFolds;
+		return parent.getName();
+	}
+
+	@Override
+	public Instances getWekaInstances()
+	{
+		if (instances == null)
+			instances = getSelf().getWekaInstances();
+		return instances;
+	}
+
+	private List<Integer> selfIdx;
+
+	private List<Integer> getSplitIndices()
+	{
+		if (selfIdx == null)
 		{
-			Printer.println(
-					"SplitDataset: creating " + (train ? "train" : "test") + " split, ratio "
-							+ splitRatio + ", seed " + randomSeed + ", stratified " + stratified);
-			List<Integer> selfIdx = new ArrayList<>();
+			Printer.println("SplitDataset: creating " + (train ? "train" : "test")
+					+ " split, ratio " + splitRatio + ", seed " + randomSeed + ", stratified "
+					+ stratified + ", anti-stratification " + antiStratification + " -> "
+					+ ((train ? splitRatio : 1 - splitRatio) * parent.getSize()));
+			selfIdx = new ArrayList<>();
 			if (stratified)
 			{
+				if (antiStratification != null)
+					throw new IllegalArgumentException();
+
 				Random r = new Random(randomSeed);
 				HashMap<String, List<Integer>> clazzIndices = new HashMap<>();
 				int i = 0;
@@ -104,6 +131,11 @@ public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 				Printer.println("-> " + s);
 				ListUtil.scramble(selfIdx, new Random(randomSeed));
 			}
+			else if (antiStratification != null)
+			{
+				selfIdx = antiStratification.antiStratifiedSplitIndices(parent, splitRatio,
+						randomSeed, train);
+			}
 			else
 			{
 				Integer[] idx = ArrayUtil.toIntegerArray(ArrayUtil.indexArray(parent.getSize()));
@@ -115,24 +147,20 @@ public class SplitDataSet extends AbstractDataSet implements WrappedDataSet
 					for (int i = (int) (idx.length * splitRatio); i < idx.length; i++)
 						selfIdx.add(idx[i]);
 			}
-			self = parent.getFilteredDataset(getName(), selfIdx);
 		}
+		return selfIdx;
+	}
+
+	public int getOrigIndex(int i)
+	{
+		return getSplitIndices().get(i);
+	}
+
+	public DataSet getSelf()
+	{
+		if (self == null)
+			self = parent.getFilteredDataset(getName(), getSplitIndices());
 		return self;
-	}
-
-	public String getName()
-	{
-		// name is used as key prefix, keep it simple		
-		//		return parent.getName() + "/" + (train ? "Train" : "Test") + "-fold-" + (fold + 1) + "-of-" + numFolds;
-		return parent.getName();
-	}
-
-	@Override
-	public Instances getWekaInstances()
-	{
-		if (instances == null)
-			instances = getSelf().getWekaInstances();
-		return instances;
 	}
 
 }

@@ -17,15 +17,17 @@ public abstract class AbstractDataSet extends DefaultComposedKeyProvider impleme
 	}
 
 	@Override
-	public DataSet getTrainSplit(double ratio, boolean stratified, long randomSeed)
+	public DataSet getTrainSplit(double ratio, boolean stratified, long randomSeed,
+			AntiStratifiedSplitter antiStratifiedSplitter)
 	{
-		return new SplitDataSet(this, ratio, stratified, randomSeed, true);
+		return new SplitDataSet(this, ratio, stratified, randomSeed, true, antiStratifiedSplitter);
 	}
 
 	@Override
-	public DataSet getTestSplit(double ratio, boolean stratified, long randomSeed)
+	public DataSet getTestSplit(double ratio, boolean stratified, long randomSeed,
+			AntiStratifiedSplitter antiStratifiedSplitter)
 	{
-		return new SplitDataSet(this, ratio, stratified, randomSeed, false);
+		return new SplitDataSet(this, ratio, stratified, randomSeed, false, antiStratifiedSplitter);
 	}
 
 	@Override
