@@ -1,7 +1,7 @@
 package org.mg.wekalib.eval2.model;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.SMO_ridgeAdjustable;
 import weka.classifiers.functions.supportVector.Kernel;
 import weka.classifiers.functions.supportVector.PolyKernel;
 import weka.classifiers.functions.supportVector.RBFKernel;
@@ -20,7 +20,7 @@ public class SupportVectorMachineModel extends AbstractModel
 	{
 		try
 		{
-			SMO smo = new SMO();
+			SMO_ridgeAdjustable smo = new SMO_ridgeAdjustable();
 			smo.setC(c);
 			smo.setBuildLogisticModels(buildLogisticModels);
 			smo.setRidge(ridge);
@@ -36,6 +36,13 @@ public class SupportVectorMachineModel extends AbstractModel
 		{
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public String getWekaClassifierName()
+	{
+		// override for backwards compatitibiltiy
+		return "SMO";
 	}
 
 	@Override

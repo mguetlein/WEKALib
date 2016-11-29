@@ -197,12 +197,16 @@ import weka.filters.unsupervised.attribute.Standardize;
  * @author Stuart Inglis (stuart@reeltwo.com) (sparse vector code)
  * @version $Revision: 10141 $
  */
-public class SMO extends AbstractClassifier
+public class SMO_ridgeAdjustable extends AbstractClassifier
 		implements WeightedInstancesHandler, TechnicalInformationHandler
 {
 
+	// START - CHANGES BY MG
+
 	/** for serialization */
-	static final long serialVersionUID = -6585883636378691736L;
+	static final long serialVersionUID = 1L;
+
+	// START - CHANGES BY MG
 
 	/**
 	 * Returns a string describing classifier
@@ -416,7 +420,7 @@ public class SMO extends AbstractClassifier
 					/*	  SerializedObject so = new SerializedObject(this);
 					        BinarySMO smo = (BinarySMO)so.getObject(); */
 					BinarySMO smo = new BinarySMO();
-					smo.setKernel(Kernel.makeCopy(SMO.this.m_kernel));
+					smo.setKernel(Kernel.makeCopy(SMO_ridgeAdjustable.this.m_kernel));
 					smo.buildClassifier(train, cl1, cl2, false, -1, -1);
 					Instances test = insts.testCV(numFolds, i);
 					for (int j = 0; j < test.numInstances(); j++)
@@ -2495,6 +2499,6 @@ public class SMO extends AbstractClassifier
 	 */
 	public static void main(String[] argv)
 	{
-		runClassifier(new SMO(), argv);
+		runClassifier(new SMO_ridgeAdjustable(), argv);
 	}
 }
