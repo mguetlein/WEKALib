@@ -138,6 +138,9 @@ public class WekaPropertyUtil
 					props.add(new SelectedTagProperty(name, uniqueName,
 							(SelectedTag) (defaultValue != null ? defaultValue
 									: getter.invoke(wekaAlgorithm, (Object[]) null))));
+				else if (type == String.class)
+					props.add(new StringProperty(name, uniqueName, (String) (defaultValue != null
+							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
 				else if (type == File.class)
 					props.add(new FileProperty(name, uniqueName, (File) (defaultValue != null
 							? defaultValue : getter.invoke(wekaAlgorithm, (Object[]) null))));
