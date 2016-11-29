@@ -10,9 +10,9 @@ import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetBoxPlot;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.SwingUtil;
-import org.mg.wekalib.evaluation.PredictionsEvaluation;
 import org.mg.wekalib.evaluation.PredictionUtil;
 import org.mg.wekalib.evaluation.Predictions;
+import org.mg.wekalib.evaluation.PredictionsEvaluation;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.SingleClassifierEnhancer;
