@@ -6,7 +6,9 @@ import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mg.wekalib.classifier.AbstainingClassifier;
 
+import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.NominalPrediction;
@@ -37,19 +39,23 @@ public class PredictionUtilTest
 			Instances train = new Instances(inst, 0, trainSize);
 			Instances test = new Instances(inst, trainSize, testSize);
 
-			NaiveBayes nb = new NaiveBayes();
-			nb.buildClassifier(train);
+			Classifier c;
+
+			c = new AbstainingClassifier();
+			((AbstainingClassifier) c).setClassifier(new NaiveBayes());
+
+			c.buildClassifier(train);
 
 			Evaluation eval = new Evaluation(train);
-			eval.evaluateModel(nb, test);
+			eval.evaluateModel(c, test);
 
 			PredictionsEvaluation eval2 = new PredictionsEvaluation(train);
-			eval2.evaluateModel(nb, test);
+			eval2.evaluateModel(c, test);
 			Predictions p = eval2.getCvPredictions();
 
 			Assert.assertEquals(p.actual.length, (int) eval.numInstances());
-			Assert.assertEquals(eval.areaUnderROC(0), eval.areaUnderROC(1), DELTA_EQ);
-			Assert.assertNotEquals(eval.areaUnderPRC(0), eval.areaUnderPRC(1), DELTA_EQ);
+			//			Assert.assertEquals(eval.areaUnderROC(0), eval.areaUnderROC(1), DELTA_EQ);
+			//			Assert.assertNotEquals(eval.areaUnderPRC(0), eval.areaUnderPRC(1), DELTA_EQ);
 
 			ArrayList<Prediction> ps = eval.predictions();
 			for (int i = 0; i < ps.size(); i++)
@@ -57,7 +63,7 @@ public class PredictionUtilTest
 				NominalPrediction pi = (NominalPrediction) ps.get(i);
 				Assert.assertEquals(pi.actual(), p.actual[i], DELTA_EQ);
 				Assert.assertEquals(pi.predicted(), p.predicted[i], DELTA_EQ);
-				Assert.assertEquals(pi.distribution()[0], 1 - pi.distribution()[1], DELTA_EQ);
+				//Assert.assertEquals(pi.distribution()[0], 1 - pi.distribution()[1], DELTA_EQ);
 				if (pi.predicted() == 0.0)
 					Assert.assertEquals(pi.distribution()[0], p.confidence[i] * 0.5 + 0.5,
 							DELTA_EQ);
@@ -92,7 +98,7 @@ public class PredictionUtilTest
 					Double val2 = PredictionUtil.getClassificationMeasureInWeka(eval, m,
 							positveClass);
 					Double val = PredictionUtil.getClassificationMeasure(p, m, positveClass);
-					//System.out.println(m + " " + val + " +" + val2);
+					System.out.println(m + " own: " + val + " weka: " + val2);
 					Assert.assertEquals(val, val2, delta);
 				}
 				catch (IllegalArgumentException e)

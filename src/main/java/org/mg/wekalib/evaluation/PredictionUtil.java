@@ -92,10 +92,44 @@ public class PredictionUtil
 		return p;
 	}
 
-	public static void add(Predictions p, Predictions source, int sourceIdx)
+	public static void add(Predictions p, Predictions source, int... sourceIdx)
 	{
-		add(p, source.actual[sourceIdx], source.predicted[sourceIdx], source.confidence[sourceIdx],
-				source.fold[sourceIdx], source.origIndex[sourceIdx]);
+		try
+		{
+			if (p.actual == null)
+			{
+				p.actual = new double[0];
+				p.predicted = new double[0];
+				p.confidence = new double[0];
+				p.fold = new int[0];
+				p.origIndex = new int[0];
+			}
+
+			int destIdx = p.actual.length;
+			int newLength = p.actual.length + sourceIdx.length;
+			p.actual = Arrays.copyOf(p.actual, newLength);
+			p.predicted = Arrays.copyOf(p.predicted, newLength);
+			p.confidence = Arrays.copyOf(p.confidence, newLength);
+			p.fold = Arrays.copyOf(p.fold, newLength);
+			p.origIndex = Arrays.copyOf(p.origIndex, newLength);
+
+			for (int sIdx : sourceIdx)
+			{
+				p.actual[destIdx] = source.actual[sIdx];
+				p.predicted[destIdx] = source.predicted[sIdx];
+				p.confidence[destIdx] = source.confidence[sIdx];
+				p.fold[destIdx] = source.fold[sIdx];
+				p.origIndex[destIdx] = source.origIndex[sIdx];
+				destIdx++;
+			}
+		}
+		catch (ArrayIndexOutOfBoundsException e)
+		{
+			System.err.println("p:\n" + toString(p) + "\n");
+			System.err.println("source:\n" + toString(source) + "\n");
+			System.err.println("sourceIdx:\n" + ArrayUtil.toString(sourceIdx) + "\n");
+			throw e;
+		}
 	}
 
 	public static void add(Predictions p, double actual, double predicted, double confidence,
@@ -627,7 +661,9 @@ public class PredictionUtil
 		for (int i = 0; i < preds.actual.length; i++)
 		{
 			double dist[];
-			if (positiveClassValue == 0.0)
+			if (Double.isNaN(probs[i]))
+				dist = new double[] { 0.0, 0.0 };
+			else if (positiveClassValue == 0.0)
 				dist = new double[] { probs[i], 1 - probs[i] };
 			else if (positiveClassValue == 1.0)
 				dist = new double[] { 1 - probs[i], probs[i] };
@@ -685,7 +721,12 @@ public class PredictionUtil
 
 	public static double AUC(Predictions preds)
 	{
-		return ThresholdCurve.getROCArea(thresholdCurveInstances(preds, 0.0));
+		return AUC(preds, 0.0);
+	}
+
+	public static double AUC(Predictions preds, double positiveClassValue)
+	{
+		return ThresholdCurve.getROCArea(thresholdCurveInstances(preds, positiveClassValue));
 	}
 
 	public static double AUPRC(Predictions preds, double postiveClassValue)
@@ -719,6 +760,8 @@ public class PredictionUtil
 		{
 			if (p.actual[j] == positiveClassValue)
 			{
+				if (Double.isNaN(p.predicted[j]))
+					continue;
 				if (p.predicted[j] == p.actual[j])
 					correct++;
 				total++;
@@ -727,6 +770,15 @@ public class PredictionUtil
 		if (total == 0)
 			return 0;
 		return correct / total;
+	}
+
+	public static int numClassValues(Predictions p, int clazz)
+	{
+		int count = 0;
+		for (int j = 0; j < p.actual.length; j++)
+			if (p.actual[j] == clazz)
+				count++;
+		return count;
 	}
 
 	public static double trueNegativeRate(Predictions p, double positiveClassValue)
@@ -741,6 +793,8 @@ public class PredictionUtil
 		{
 			if (p.actual[j] != positiveClassValue)
 			{
+				if (Double.isNaN(p.predicted[j]))
+					continue;
 				if (p.predicted[j] == p.actual[j])
 					correct++;
 				total++;
@@ -823,7 +877,7 @@ public class PredictionUtil
 		switch (m)
 		{
 			case AUC:
-				return AUC(p);
+				return AUC(p, positiveClassValue);
 			case AUPRC:
 				return AUPRC(p, positiveClassValue);
 			case Accuracy:
@@ -870,13 +924,56 @@ public class PredictionUtil
 		double probs[] = new double[p.actual.length];
 		for (int i = 0; i < p.confidence.length; i++)
 		{
-			double prob = 0.5 + 0.5 * p.confidence[i];
-			if (p.predicted[i] == positiveClassValue)
-				probs[i] = prob;
+			if (Double.isNaN(p.confidence[i]))
+				probs[i] = Double.NaN;
 			else
-				probs[i] = 1 - prob;
+			{
+				double prob = 0.5 + 0.5 * p.confidence[i];
+				if (p.predicted[i] == positiveClassValue)
+					probs[i] = prob;
+				else
+					probs[i] = 1 - prob;
+			}
 		}
 		return probs;
+	}
+
+	public static Predictions filterConfAllClasses(Predictions pred, double d)
+	{
+		return filterConfAllClasses(pred, d, pred.confidence);
+	}
+
+	public static Predictions filterConfAllClasses(Predictions pred, double d, double[] confidence)
+	{
+		if (confidence.length != pred.actual.length)
+			throw new IllegalStateException(pred.actual.length + " != " + confidence.length);
+
+		//		double lowConf = 1.0;
+		//		int lowIdx = -1;
+
+		List<Integer> select = new ArrayList<>();
+		for (int i = 0; i < confidence.length; i++)
+			if (confidence[i] >= d)
+			{
+				select.add(i);
+				//				if (confidence[i] < lowConf)
+				//				{
+				//					lowConf = confidence[i];
+				//					lowIdx = i;
+				//				}
+			}
+
+		//		System.out.println("prediction with lowest confidence in filtered prediction > " + d);
+		//		if (lowIdx == -1)
+		//			System.out.println("nothing found");
+		//		else
+		//		{
+		//			System.out.println("confidence " + lowConf);
+		//			System.out.println(singlePredictionToString(pred, lowIdx));
+		//		}
+		Predictions p = new Predictions();
+		add(p, pred, ArrayUtil.toPrimitiveIntArray(ArrayUtil.toIntegerArray(select)));
+		return p;
 	}
 
 	public static Predictions topConfPositive(Predictions p, double d, double positiveClassValue)
@@ -888,7 +985,12 @@ public class PredictionUtil
 
 	public static Predictions topConfAllClasses(Predictions pred, double d)
 	{
-		int confOrder[] = ArrayUtil.getOrdering(pred.confidence, false);
+		return topConfAllClasses(pred, d, pred.confidence);
+	}
+
+	public static Predictions topConfAllClasses(Predictions pred, double d, double[] confidence)
+	{
+		int confOrder[] = ArrayUtil.getOrdering(confidence, false);
 		return topFromOrdering(pred, d, confOrder);
 	}
 
@@ -1006,6 +1108,33 @@ public class PredictionUtil
 		bf.append("accuracy: " + accuracy(p) + "\n");
 		bf.append("auc: " + AUC(p) + "\n");
 		return bf.toString();
+	}
+
+	public static String singlePredictionToString(Predictions p, int idx)
+	{
+		StringBuffer b = new StringBuffer("");
+		b.append("idx:       " + idx + "\n");
+		b.append("prob:      " + p.confidence[idx] + "\n");
+		b.append("actual:    " + p.actual[idx] + "\n");
+		b.append("predicted: " + p.predicted[idx] + "\n");
+		b.append("orig-idx:  " + p.origIndex[idx]);
+		return b.toString();
+	}
+
+	public static String toString(Predictions p)
+	{
+		StringBuffer b = new StringBuffer("");
+		b.append("actual:     " + p.actual.length + " " + DoubleArraySummary.create(p.actual)
+				+ "\n");
+		b.append("predicted:  " + p.predicted.length + " " + DoubleArraySummary.create(p.predicted)
+				+ "\n");
+		b.append("confidence: " + p.confidence.length + " "
+				+ DoubleArraySummary.create(p.confidence) + "\n");
+		b.append("fold:       " + p.fold.length + " "
+				+ DoubleArraySummary.create(ArrayUtil.toPrimitiveDoubleArray(p.fold)) + "\n");
+		b.append("origIndex:  " + p.origIndex.length + " "
+				+ DoubleArraySummary.create(ArrayUtil.toPrimitiveDoubleArray(p.origIndex)) + "\n");
+		return b.toString();
 	}
 
 }

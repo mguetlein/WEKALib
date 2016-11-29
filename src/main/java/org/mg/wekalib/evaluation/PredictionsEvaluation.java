@@ -17,6 +17,7 @@ import weka.classifiers.evaluation.output.prediction.AbstractOutput;
 import weka.classifiers.meta.RegressionByDiscretization;
 import weka.core.BatchPredictor;
 import weka.core.Instances;
+import weka.core.Utils;
 
 public class PredictionsEvaluation extends Evaluation
 {
@@ -169,6 +170,10 @@ public class PredictionsEvaluation extends Evaluation
 							{
 								//conf = 1 - ((NominalPrediction) p).distribution()[1];
 								conf = (((NominalPrediction) p).distribution()[1] - 0.5) * 2;
+							}
+							else if (Utils.isMissingValue(predictions[i]))
+							{
+								conf = Double.NaN;
 							}
 							else
 								throw new IllegalStateException(
