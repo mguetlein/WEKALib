@@ -16,40 +16,39 @@ import weka.core.neighboursearch.PerformanceStats;
 
 public class TanimotoDistance implements Distance, DistanceFunction, Serializable
 {
-	private static final long serialVersionUID = 1L;
-
 	public static final long VERSION = 1;
+
+	private static final long serialVersionUID = VERSION;
 
 	private static boolean VERBOSE = true;
 
 	Instances train;
 
-	Map<Instance, BitSet> bitsets = new HashMap<>();
+	private static Map<Instance, BitSet> bitsets = new HashMap<>();
 
-	int lookup = 0;
+	private static int lookup = 0;
 
 	public BitSet getBitSet(Instance inst)
 	{
-		//		if (!bitsets.containsKey(inst))
-		//		{
-		//			if (VERBOSE && bitsets.size() > 0 && bitsets.size() % 100 == 0)
-		//				System.out.println("Tanimoto> storing bitset for compound #" + bitsets.size()
-		//						+ ", lookups: " + lookup);
-		//
-		BitSet bs = new BitSet();
-		for (int i = 0; i < inst.numAttributes(); i++)
+		if (!bitsets.containsKey(inst))
 		{
-			if (inst.classIndex() == i)
-				continue;
-			if (inst.value(i) == 1.0)
-				bs.set(i);
+			if (VERBOSE && bitsets.size() > 0 && bitsets.size() % 1000 == 0)
+				System.err.println("Tanimoto> storing bitset for compound #" + bitsets.size()
+						+ ", lookups: " + lookup);
+
+			BitSet bs = new BitSet();
+			for (int i = 0; i < inst.numAttributes(); i++)
+			{
+				if (inst.classIndex() == i)
+					continue;
+				if (inst.value(i) == 1.0)
+					bs.set(i);
+			}
+			bitsets.put(inst, bs);
 		}
-		return bs;
-		//			bitsets.put(inst, bs);
-		//		}
-		//		else
-		//			lookup++;
-		//		return bitsets.get(inst);
+		else
+			lookup++;
+		return bitsets.get(inst);
 	}
 
 	public String toString()
@@ -69,7 +68,7 @@ public class TanimotoDistance implements Distance, DistanceFunction, Serializabl
 	public void build(Instances train)
 	{
 		if (VERBOSE)
-			System.out.println("Tanimoto> training data has " + train.numInstances()
+			System.err.println("Tanimoto> training data has " + train.numInstances()
 					+ " instances and " + train.numAttributes() + " attributes");
 		for (int i = 0; i < train.numAttributes(); i++)
 		{
@@ -134,38 +133,11 @@ public class TanimotoDistance implements Distance, DistanceFunction, Serializabl
 		return distance(first, second, Double.POSITIVE_INFINITY, stats);
 	}
 
-	public static double tanimotoDistanceDirect(Instance i1, Instance i2)
-	{
-		//		StopWatchUtil.start("tani");
-		int and = 0;
-		int or = 0;
-		for (int i = 0; i < i1.numAttributes(); i++)
-		{
-			if (i1.classIndex() == i)
-				continue;
-			if (i1.value(i) == 1.0)
-			{
-				if (i2.value(i) == 1.0)
-					and++;
-				else
-					or++;
-			}
-			else if (i2.value(i) == 1.0)
-				or++;
-		}
-		if (or == 0)
-			return 0;
-		double d = 1 - and / (double) or;
-		//		StopWatchUtil.stop("tani");
-		return d;
-	}
-
 	@Override
 	public double distance(Instance first, Instance second, double cutOffValue,
 			PerformanceStats stats)
 	{
-		//double distance = distanceInternal(first, second);
-		double distance = tanimotoDistanceDirect(first, second);
+		double distance = distanceInternal(first, second);
 		if (stats != null)
 			stats.incrCoordCount();
 		if (distance > cutOffValue)

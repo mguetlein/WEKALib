@@ -1,19 +1,30 @@
 package org.mg.wekalib.distance;
 
+import java.io.Serializable;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
 import weka.attributeSelection.PrincipalComponents;
+import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.Option;
+import weka.core.neighboursearch.PerformanceStats;
 
-public class EuclideanPCADistance implements Distance
+public class EuclideanPCADistance implements Distance, DistanceFunction, Serializable
 {
 	public static final long VERSION = 1;
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = VERSION;
+
 	PrincipalComponents pca;
 	EuclideanDistance dist;
+	Instances trainingData;
 	Instances transformedTrainingData;
 	Map<Instances, Instances> transformedTestData = new HashMap<>();
 
@@ -35,6 +46,7 @@ public class EuclideanPCADistance implements Distance
 	{
 		try
 		{
+			trainingData = train;
 			pca = new PrincipalComponents();
 			pca.setCenterData(false);
 			pca.setVarianceCovered(0.95);
@@ -106,6 +118,106 @@ public class EuclideanPCADistance implements Distance
 	public Double getMaxDistance()
 	{
 		return null;
+	}
+
+	// weka methods implementing Distance Function
+
+	@Override
+	public String getAttributeIndices()
+	{
+		return "all";
+	}
+
+	@Override
+	public Instances getInstances()
+	{
+		return trainingData;
+	}
+
+	@Override
+	public boolean getInvertSelection()
+	{
+		return false;
+	}
+
+	@Override
+	public String[] getOptions()
+	{
+		return new String[0];
+	}
+
+	@Override
+	public Enumeration<Option> listOptions()
+	{
+		return null;
+	}
+
+	@Override
+	public void postProcessDistances(double[] distances)
+	{
+	}
+
+	@Override
+	public void setAttributeIndices(String value)
+	{
+		throw new IllegalStateException("not implemented");
+	}
+
+	@Override
+	public void setInstances(Instances insts)
+	{
+		build(insts);
+	}
+
+	@Override
+	public void setInvertSelection(boolean value)
+	{
+		throw new IllegalStateException("not implemented");
+	}
+
+	@Override
+	public void setOptions(String[] options) throws Exception
+	{
+		throw new IllegalStateException("not implemented");
+	}
+
+	@Override
+	public void update(Instance ins)
+	{
+		throw new IllegalStateException("not implemented");
+	}
+
+	@Override
+	public double distance(Instance first, Instance second, PerformanceStats stats) throws Exception
+	{
+		return distance(first, second, Double.POSITIVE_INFINITY, stats);
+	}
+
+	@Override
+	public double distance(Instance first, Instance second, double cutOffValue)
+	{
+		return distance(first, second, cutOffValue, null);
+	}
+
+	@Override
+	public double distance(Instance first, Instance second, double cutOffValue,
+			PerformanceStats stats)
+	{
+		double distance = distance(first, second);
+		if (stats != null)
+			stats.incrCoordCount();
+		if (distance > cutOffValue)
+			return Double.POSITIVE_INFINITY;
+		return distance;
+	}
+
+	@Override
+	public void clean()
+	{
+		trainingData = null;
+		pca = null;
+		transformedTrainingData = null;
+		dist = null;
 	}
 
 }

@@ -1,9 +1,11 @@
 package org.mg.wekalib.distance;
 
+import java.io.Serializable;
+
 import weka.core.Instance;
 import weka.core.Instances;
 
-public interface Distance
+public interface Distance extends Serializable
 {
 	public void build(Instances train);
 
