@@ -1,7 +1,6 @@
 package org.mg.wekalib.data;
 
 import java.io.FileReader;
-import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,12 +60,6 @@ public class ArffWritableTest
 					}
 
 					@Override
-					public String getMissingValue(int attribute)
-					{
-						return null;
-					}
-
-					@Override
 					public String[] getAttributeDomain(int attribute)
 					{
 						Attribute a = inst.attribute(attribute);
@@ -89,31 +82,12 @@ public class ArffWritableTest
 					}
 
 					@Override
-					public String getAttributeValue(int instance, int attribute) throws Exception
-					{
-						if (inst.get(instance).isMissing(attribute))
-							return null;
-						else if (inst.attribute(attribute).isNumeric())
-							return String.valueOf(inst.get(instance).value(attribute));
-						else
-							return inst.get(instance).stringValue(attribute);
-					}
-
-					@Override
 					public String getAttributeName(int attribute)
 					{
 						return inst.attribute(attribute).name();
 					}
-
-					@Override
-					public List<String> getAdditionalInfo()
-					{
-						return null;
-					}
 				};
 
-				if (!toSparse)
-					instancesEqual(inst, ArffWriter.toInstances(arff));
 				instancesEqual(inst, InstancesCreator.create(arff));
 			}
 		}
