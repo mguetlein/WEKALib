@@ -12,8 +12,8 @@ public class LOFOutlierModel extends AbstractModel
 	String distanceFunctionClassName = TanimotoDistance.class.getName();
 	//String distanceFunctionClassName = EuclideanDistance.class.getName();
 
-	int lowerBoundK = 10;
-	int upperBoundK = 11;
+	int lowerBoundK = 3;
+	int upperBoundK = 4;
 
 	public void setDistanceFunctionClassName(String distanceFunctionClassName)
 	{
