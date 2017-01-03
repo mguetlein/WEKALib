@@ -1,5 +1,6 @@
 package org.mg.wekalib.data;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.mg.javalib.util.ArrayUtil;
@@ -9,9 +10,23 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SparseInstance;
+import weka.core.converters.ArffSaver;
 
 public class InstancesCreator
 {
+	public static void toArffFile(File f, ArffWritable w) throws Exception
+	{
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(create(w));
+		saver.setFile(f);
+		saver.writeBatch();
+	}
+
+	/**
+	 * @param w
+	 * @return
+	 * @throws Exception
+	 */
 	public static Instances create(ArffWritable w) throws Exception
 	{
 		ArrayList<Attribute> a = new ArrayList<Attribute>();
