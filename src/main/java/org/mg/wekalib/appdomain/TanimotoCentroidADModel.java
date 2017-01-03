@@ -10,6 +10,8 @@ import weka.core.SparseInstance;
 
 public class TanimotoCentroidADModel extends CentroidDistanceBasedADModel
 {
+	private static final long serialVersionUID = 1L;
+
 	double consensusFPThreshold;
 
 	public TanimotoCentroidADModel(double pThreshold, double consensusFPThreshold)

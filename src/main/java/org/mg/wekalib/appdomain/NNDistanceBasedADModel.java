@@ -8,6 +8,8 @@ import weka.core.Instance;
 
 public class NNDistanceBasedADModel extends AbstractDistanceBasedADModel
 {
+	private static final long serialVersionUID = 1L;
+
 	protected int k;
 
 	protected boolean mean;

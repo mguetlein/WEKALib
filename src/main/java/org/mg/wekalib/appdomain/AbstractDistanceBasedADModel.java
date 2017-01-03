@@ -28,6 +28,8 @@ import weka.core.Instances;
 
 public abstract class AbstractDistanceBasedADModel implements DistanceBasedADModel
 {
+	private static final long serialVersionUID = 1L;
+
 	protected Instances trainingData;
 
 	double[] trainingDistances;
@@ -57,8 +59,8 @@ public abstract class AbstractDistanceBasedADModel implements DistanceBasedADMod
 		double d = computeDistanceInternal(instance);
 		if (dist.getMaxDistance() == null && d > maxTrainingDistance)
 		{
-			System.err.println(
-					"test-distance > max-train-distance!! " + d + " > " + maxTrainingDistance);
+			//			System.err.println(
+			//					"test-distance > max-train-distance!! " + d + " > " + maxTrainingDistance);
 			d = maxTrainingDistance;
 		}
 		return d;
@@ -87,6 +89,14 @@ public abstract class AbstractDistanceBasedADModel implements DistanceBasedADMod
 			trainingDist.add(d);
 		}
 		trainingDistances = ArrayUtil.toPrimitiveDoubleArray(trainingDist);
+
+		//		System.out.println("ad building done, mean training dist: "
+		//				+ new DescriptiveStatistics(trainingDistances).getMean());
+	}
+
+	public double getTrainingDistance(int dIdx)
+	{
+		return trainingDistances[dIdx];
 	}
 
 	@Override
@@ -107,7 +117,7 @@ public abstract class AbstractDistanceBasedADModel implements DistanceBasedADMod
 		if (stats == null)
 		{
 			stats = new DescriptiveStatistics(trainingDistances);
-			System.out.println("stats: " + stats.getMean() + " +- " + stats.getStandardDeviation());
+			//			System.out.println("stats: " + stats.getMean() + " +- " + stats.getStandardDeviation());
 		}
 		return stats;
 	}

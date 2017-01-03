@@ -6,6 +6,8 @@ import weka.core.Instance;
 
 public abstract class CentroidDistanceBasedADModel extends AbstractDistanceBasedADModel
 {
+	private static final long serialVersionUID = 1L;
+
 	private Instance centroid;
 
 	public CentroidDistanceBasedADModel(double pThreshold, Distance dist, boolean fitToNormal)
