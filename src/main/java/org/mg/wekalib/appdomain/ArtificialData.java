@@ -32,16 +32,20 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.util.ShapeUtilities;
 import org.mg.javalib.freechart.FreeChartUtil;
 import org.mg.javalib.gui.property.ColorGradient;
-import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.ColorUtil;
 import org.mg.javalib.util.ListUtil;
 import org.mg.javalib.util.SwingUtil;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.SimpleLogistic;
+import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.EuclideanDistance;
+import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.neighboursearch.LinearNNSearch;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.LOF;
 
 public class ArtificialData
 {
@@ -109,7 +113,57 @@ public class ArtificialData
 		inst.setDataset(trainingData);
 		try
 		{
-			return clazzy.distributionForInstance(inst)[1];
+			double p = clazzy.distributionForInstance(inst)[1];
+			System.out.println(p + " for " + x + "/" + y);
+			return p;
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	private LOF lof;
+
+	public double lof(double x, double y)
+	{
+		if (lof == null)
+		{
+			try
+			{
+				lof = new LOF();
+				lof.setInputFormat(trainingData);
+				lof.setMinPointsLowerBound(2 + "");
+				lof.setMinPointsUpperBound(4 + "");
+				LinearNNSearch search = new LinearNNSearch();
+				search.setDistanceFunction(new EuclideanDistance());
+				lof.setNNSearch(search);
+				lof.setNumExecutionSlots(1 + "");
+				Filter.useFilter(trainingData, lof);
+			}
+			catch (Exception e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+
+		//		ArrayList<Attribute> attributes = new ArrayList<>();
+		//		for (int i = 0; i < trainingData.numAttributes(); i++)
+		//			attributes.add(trainingData.attribute(i));
+		//		Instances insts = new Instances("new", attributes, 1);
+		//insts.add(inst);
+
+		Instance inst = new DenseInstance(1.0, new double[] { x, y, Double.NaN });
+		inst.setDataset(trainingData);
+
+		//		System.out.println(trainingData.numInstances());
+		//		System.out.println(insts.numInstances());
+
+		try
+		{
+			lof.input(inst);
+			Instance scored = lof.output();
+			return scored.value(scored.numAttributes() - 1);
 		}
 		catch (Exception e)
 		{
@@ -142,7 +196,8 @@ public class ArtificialData
 
 	enum Draw
 	{
-		OnlyTrain, UniverseUnpredicted, UniversePredicted, UniversePredictedBoundary, GroundTruth;
+		OnlyTrain, UniverseUnpredicted, UniversePredicted, UniversePredictedBoundary, GroundTruth,
+		LOF;
 
 		public boolean addUniverse()
 		{
@@ -156,7 +211,8 @@ public class ArtificialData
 
 		public boolean showUniversePrediction()
 		{
-			return this == Draw.UniversePredicted || this == Draw.UniversePredictedBoundary;
+			return this == Draw.UniversePredicted || this == Draw.UniversePredictedBoundary
+					|| this == Draw.LOF;
 		}
 
 		public boolean drawBoundary()
@@ -183,10 +239,10 @@ public class ArtificialData
 		double yMax = 6.0;
 
 		XYSeries seriesTrain = new XYSeries("train");
-		NormalDistribution xNorm = new NormalDistribution(rg, 1.33, 0.5);
-		NormalDistribution yNorm = new NormalDistribution(rg, function(1.33), 0.5);
 		List<double[]> trueTrain = new ArrayList<>();
 		List<double[]> falseTrain = new ArrayList<>();
+		NormalDistribution xNorm = new NormalDistribution(rg, 1.33, 0.5);
+		NormalDistribution yNorm = new NormalDistribution(rg, function(1.33), 0.5);
 		for (int i = 0; i < 200; i++)
 		{
 			double x = xNorm.sample();
@@ -196,6 +252,18 @@ public class ArtificialData
 			else
 				falseTrain.add(new double[] { x, y });
 		}
+		//		xNorm = new NormalDistribution(rg, 0.7, 0.5);
+		//		yNorm = new NormalDistribution(rg, function(0.3), 0.5);
+		//		for (int i = 0; i < 200; i++)
+		//		{
+		//			double x = xNorm.sample();
+		//			double y = yNorm.sample();
+		//			if (isTrue(x, y, noise))
+		//				trueTrain.add(new double[] { x, y });
+		//			else
+		//				falseTrain.add(new double[] { x, y });
+		//		}
+
 		for (double[] v : trueTrain)
 			seriesTrain.add(v[0], v[1]);
 		for (double[] v : falseTrain)
@@ -226,11 +294,11 @@ public class ArtificialData
 				System.out.println("sampling " + i);
 		}
 
-		for (final Draw draw : ArrayUtil.reverse(Draw.values()))
-		//final Draw draw = Draw.UniversePredictedBoundary;
+		//for (final Draw draw : ArrayUtil.reverse(Draw.values()))
+		final Draw draw = Draw.UniversePredicted;
 		{
-			if (draw == Draw.UniversePredicted)
-				continue;
+			//			if (draw == Draw.UniversePredicted)
+			//				continue;
 
 			DefaultXYDataset d = new DefaultXYDataset();
 			d.addSeries(seriesTrain.getKey(), seriesTrain.toArray());
@@ -273,8 +341,23 @@ public class ArtificialData
 
 						if (draw.showUniversePrediction())
 						{
-							c = ColorGradient.get2ColorGradient(predict(x, y), Color.RED,
-									Color.BLUE);
+							if (draw == Draw.LOF)
+							{
+								double lof = lof(x, y);
+								if (lof < 1.75)
+									c = Color.GREEN;
+								else if (lof < 2.25)
+									c = Color.GRAY;
+								else
+									c = Color.ORANGE;
+							}
+							else
+							{
+								c = ColorGradient.get2ColorGradient(predict(x, y), Color.RED,
+										Color.BLUE);
+								//								c = new ColorGradient(Color.GREEN, Color.GRAY, Color.MAG)
+								//										.getColor((predict(x, y) - 0.5) * 2);
+							}
 							//							c = gradient.getColor(predict(x, y));
 						}
 						else if (draw.showUniverseClass())
@@ -315,6 +398,7 @@ public class ArtificialData
 				}
 			};
 			renderer.setBaseLinesVisible(false);
+
 			float size = 4f;
 			Shape circle = new Ellipse2D.Double(-size, -size, size * 2, size * 2);
 			Shape shape = ShapeUtilities.createDiamond(size);
@@ -401,7 +485,17 @@ public class ArtificialData
 
 	public static void main(String args[])
 	{
-		new ArtificialData(new SimpleLogistic(), true, 2);
+		long seed = new Random().nextLong();
+		System.err.println(seed);
+		//new ArtificialData(new RandomForest(), true, seed);
+
+		RandomForest one = new RandomForest();
+		//OneClassSVM one = new OneClassSVM();
+		//Classifier one = new DistanceBasedADClassifier(new PCAEuclideanADModel(3, true, 0.95), 1);
+
+		new ArtificialData(one, true, seed);
+
+		//new ArtificialData(new LOF(), true, 2);
 		//		new ArtificialData(new RandomForest(), true, 17);
 		//		new ArtificialData(new RandomForest(), true, 2);
 
